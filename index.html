@@ -1132,6 +1132,18 @@ function exportPDF(theme) {
   const t = themes[theme] || themes.normal;
   const svgStr = new XMLSerializer().serializeToString(svgClone);
 
+  // Captura todas as regras CSS ativas (Tabelas, Callouts e Markmap) para injetar no PDF
+  const rules = [];
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule.selectorText && (rule.selectorText.includes('markmap') || rule.selectorText.includes('.mm-'))) {
+          rules.push(rule.cssText);
+        }
+      }
+    } catch {}
+  }
+
   const win = window.open('', '_blank', 'width=1200,height=850');
   if (!win) { toast('❌ Popup bloqueado — permita pop-ups para este site.'); return; }
 
@@ -1141,7 +1153,8 @@ function exportPDF(theme) {
 <head>
   <meta charset="UTF-8">
   <title>Markmap PDF — ${t.label}</title>
-  <style>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     @page {
       margin: 8mm;
       size: A4 landscape;
@@ -1153,6 +1166,7 @@ function exportPDF(theme) {
       align-items: center;
       justify-content: center;
       min-height: 100vh;
+      font-family: 'Inter', sans-serif;
     }
     svg {
       width: 100%;
@@ -1160,7 +1174,11 @@ function exportPDF(theme) {
       max-height: 100vh;
       display: block;
     }
+    /* Estilos copiados da página original (para tabelas, callouts e formatação markmap não quebrarem) */
+    ${rules.join('\n')}
+    
     ${t.svgStyle}
+    
     /* controles de impressão */
     @media print {
       body { background: ${t.pageBg} !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
