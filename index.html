@@ -189,6 +189,20 @@
     .drop-item:last-child  { border-radius: 0 0 var(--r) var(--r); }
     .drop-item .di { font-size: 15px; }
 
+    .drop-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+    .drop-label {
+      padding: 4px 14px 2px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
     /* ═══════════════════════════════════════════════════════
        MAIN SPLIT
     ═══════════════════════════════════════════════════════ */
@@ -498,6 +512,17 @@
         </div>
         <div class="drop-item" onclick="exportHTML()">
           <span class="di">🌐</span> HTML standalone
+        </div>
+        <div class="drop-sep"></div>
+        <div class="drop-label">PDF</div>
+        <div class="drop-item" onclick="exportPDF('normal')">
+          <span class="di">☀️</span> PDF — Normal
+        </div>
+        <div class="drop-item" onclick="exportPDF('dark')">
+          <span class="di">🌑</span> PDF — Dark
+        </div>
+        <div class="drop-item" onclick="exportPDF('eink')">
+          <span class="di">📖</span> PDF — E-Ink (P&B)
         </div>
       </div>
     </div>
@@ -877,6 +902,135 @@ function exportHTML() {
   dl(new Blob([html], { type: 'text/html;charset=utf-8' }), filename('html'));
   toast('✅ HTML exportado!');
   closeExportDrop();
+}
+
+/* ─────────────────────────────────────────────────────────
+   PDF EXPORT  (Normal · Dark · E-Ink)
+   Estratégia: abre janela com o SVG + CSS temático e dispara window.print()
+   O browser oferece "Salvar como PDF" nativamente.
+───────────────────────────────────────────────────────── */
+function exportPDF(theme) {
+  const svgEl = document.getElementById('markmap-svg');
+  if (!svgEl.classList.contains('visible')) { toast('⚠️ Renderize primeiro!'); return; }
+  closeExportDrop();
+
+  // Fit antes de serializar para garantir que o mapa está centralizado
+  mm?.fit();
+
+  const svgClone = svgEl.cloneNode(true);
+  svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svgClone.removeAttribute('style'); // deixa o CSS da janela controlar
+
+  const themes = {
+    normal: {
+      label: 'Normal',
+      pageBg:  '#ffffff',
+      svgStyle: `
+        /* ── textos ── */
+        text { fill: #1c1c2e !important; }
+        /* ── nós ── */
+        .markmap-node circle {
+          fill: #f0f4ff !important;
+          stroke: #2563eb !important;
+        }
+        /* ── strong / títulos em azul ── */
+        foreignObject strong, foreignObject b { color: #2563eb !important; }
+        foreignObject *  { color: #1c1c2e !important; }
+        foreignObject a  { color: #2563eb !important; }
+        /* ── linhas de conexão ── */
+        path.markmap-link { stroke: #94a3b8 !important; }
+      `
+    },
+    dark: {
+      label: 'Dark',
+      pageBg:  '#0d1117',
+      svgStyle: `
+        /* baseado em markmap-dark.css do Obsidian */
+        text { fill: #e2e8f0 !important; }
+        .markmap-node circle {
+          fill: #1e1e1e !important;
+          stroke: #58a6ff !important;
+        }
+        foreignObject *      { color: #e2e8f0 !important; }
+        foreignObject strong,
+        foreignObject b      { color: #58a6ff !important; }
+        foreignObject a      { color: #79c0ff !important; }
+        path.markmap-link    { stroke: #30363d !important; }
+      `
+    },
+    eink: {
+      label: 'E-Ink',
+      pageBg:  '#ffffff',
+      svgStyle: `
+        /* máximo contraste P&B para e-readers e impressão */
+        text { fill: #000000 !important; font-weight: 500 !important; }
+        .markmap-node circle {
+          fill: #ffffff !important;
+          stroke: #000000 !important;
+          stroke-width: 1.5 !important;
+        }
+        foreignObject *      { color: #000000 !important; }
+        foreignObject strong,
+        foreignObject b      { color: #000000 !important; font-weight: 700 !important; }
+        foreignObject a      { color: #000000 !important; text-decoration: underline !important; }
+        path.markmap-link    { stroke: #444444 !important; }
+        /* remove cores do markmap (branches coloridos) */
+        .markmap-node path   { stroke: #444444 !important; }
+      `
+    }
+  };
+
+  const t = themes[theme] || themes.normal;
+  const svgStr = new XMLSerializer().serializeToString(svgClone);
+
+  const win = window.open('', '_blank', 'width=1200,height=850');
+  if (!win) { toast('❌ Popup bloqueado — permita pop-ups para este site.'); return; }
+
+  win.document.open();
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Markmap PDF — ${t.label}</title>
+  <style>
+    @page {
+      margin: 8mm;
+      size: A4 landscape;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: ${t.pageBg};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    svg {
+      width: 100%;
+      height: 100vh;
+      max-height: 100vh;
+      display: block;
+    }
+    ${t.svgStyle}
+    /* controles de impressão */
+    @media print {
+      body { background: ${t.pageBg} !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      svg  { width: 100vw !important; height: 100vh !important; }
+    }
+  </style>
+</head>
+<body>
+  ${svgStr}
+  <script>
+    window.addEventListener('load', () => {
+      // aguarda render do SVG antes de abrir o diálogo
+      setTimeout(() => { window.print(); }, 600);
+    });
+  <\/script>
+</body>
+</html>`);
+  win.document.close();
+  toast('✅ PDF — selecione "Salvar como PDF" no diálogo de impressão');
 }
 
 function dl(blob, name) {
