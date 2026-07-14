@@ -478,7 +478,15 @@
     #markmap-svg foreignObject b { color: #58a6ff !important; }
     #markmap-svg .markmap-foreign a { color: #58a6ff !important; }
 
-    /* Estilos para Callouts e Tabelas injetados */
+    /* Estilos para Callouts, Tabelas e Highlights injetados */
+    #markmap-svg foreignObject mark {
+      background: rgba(227, 179, 65, 0.25) !important;
+      color: #e3b341 !important;
+      border: 1px solid rgba(227, 179, 65, 0.4);
+      padding: 0 4px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
     .mm-callout {
       border-left: 4px solid #58a6ff;
       background: rgba(255, 255, 255, 0.05);
@@ -739,6 +747,7 @@ function preprocessMD(md) {
         if (nextMatch && !lines[j].match(/^(\s*)(?:-\s*)?>\s*\[!/)) {
           let text = nextMatch[2].trim();
           text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          text = text.replace(/==(.*?)==/g, '<mark>$1</mark>');
           html += `<div>${text}</div>`;
           j++;
         } else {
@@ -751,22 +760,28 @@ function preprocessMD(md) {
       continue;
     }
 
-    // 3. Parser de Tabelas: `  - | Col 1 | Col 2 |`
+    // 3. Parser de Tabelas robusto
     const tableMatch = line.match(/^(\s*)(?:-\s*)?\|(.*)\|?\s*$/);
     const nextLine = lines[i+1] || "";
-    if (tableMatch && nextLine.match(/^\s*\|?[\s-:]+\|?\s*$/) && nextLine.includes('-')) {
+    if (tableMatch && nextLine.match(/^\s*\|?[\s\-:|]+\|?\s*$/) && nextLine.includes('-') && nextLine.includes('|')) {
        let indent = tableMatch[1];
        let parseRow = (str) => str.split('|').map(s => s.trim()).filter((s, idx, arr) => !(s==='' && (idx===0 || idx===arr.length-1)));
        
        let headers = parseRow(tableMatch[2]);
-       let html = `<table class="mm-table"><thead><tr>` + headers.map(h => `<th>${h}</th>`).join('') + `</tr></thead><tbody>`;
+       let html = `<table class="mm-table"><thead><tr>` + headers.map(h => {
+         let th = h.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/==(.*?)==/g, '<mark>$1</mark>');
+         return `<th>${th}</th>`;
+       }).join('') + `</tr></thead><tbody>`;
        
        let j = i + 2;
        while(j < lines.length) {
          let rMatch = lines[j].match(/^\s*\|(.*)\|?\s*$/);
-         if (rMatch) {
+         if (rMatch && !lines[j].match(/^\s*\|?[\s\-:|]+\|?\s*$/)) {
            let cells = parseRow(rMatch[1]);
-           html += `<tr>` + cells.map(c => `<td>${c}</td>`).join('') + `</tr>`;
+           html += `<tr>` + cells.map(c => {
+             let td = c.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/==(.*?)==/g, '<mark>$1</mark>');
+             return `<td>${td}</td>`;
+           }).join('') + `</tr>`;
            j++;
          } else {
            break;
@@ -777,6 +792,11 @@ function preprocessMD(md) {
        i = j - 1;
        continue;
     }
+
+    // 4. Inline formatting (Highlights e Checkboxes)
+    line = line.replace(/==(.*?)==/g, '<mark>$1</mark>');
+    line = line.replace(/^(\s*-\s*)\[[xX]\]\s+(.*)/, '$1<input type="checkbox" checked disabled style="margin:0 6px 0 0; vertical-align:middle; accent-color: var(--accent);"> $2');
+    line = line.replace(/^(\s*-\s*)\[ \]\s+(.*)/, '$1<input type="checkbox" disabled style="margin:0 6px 0 0; vertical-align:middle;"> $2');
 
     out.push(line);
   }
