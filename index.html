@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markmap Viewer — TJCE</title>
+  <meta name="description" content="Visualizador e exportador de mapas mentais Markmap para estudo. Cole seu código, visualize e exporte em SVG, PNG ou HTML.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       TOKENS
+    ═══════════════════════════════════════════════════════ */
+    :root {
+      --bg:            #0d1117;
+      --bg2:           #161b22;
+      --bg3:           #21262d;
+      --border:        #30363d;
+      --border-subtle: #21262d;
+      --text:          #e6edf3;
+      --text-muted:    #7d8590;
+      --text-subtle:   #4d5566;
+      --accent:        #58a6ff;
+      --accent-dim:    rgba(88,166,255,.15);
+      --success:       #3fb950;
+      --danger:        #f85149;
+      --primary:       #1f6feb;
+      --primary-h:     #388bfd;
+      --r:             6px;
+      --r-lg:          12px;
+      --shadow:        0 8px 32px rgba(1,4,9,.9);
+      --font:          'Inter', -apple-system, sans-serif;
+      --mono:          'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════════════════ */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 50px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-orb {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 14px rgba(88,166,255,.35);
+      flex-shrink: 0;
+    }
+
+    .logo-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .logo-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 20px;
+      letter-spacing: .3px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       BUTTONS
+    ═══════════════════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .13s, border-color .13s, color .13s, box-shadow .13s;
+      white-space: nowrap;
+      line-height: 1;
+      user-select: none;
+    }
+    .btn:hover {
+      background: var(--border);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 14px var(--accent-dim);
+    }
+    .btn:active { transform: scale(.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-h));
+      border-color: var(--primary-h);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--primary-h), #58a6ff);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(56,139,253,.4);
+    }
+
+    .btn-icon { padding: 5px 9px; font-size: 14px; }
+
+    .btn-group { display: flex; gap: 3px; }
+
+    /* ─── Export dropdown ─── */
+    .export-wrap { position: relative; }
+
+    .export-drop {
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 0;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      min-width: 160px;
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity .15s, transform .15s;
+    }
+    .export-drop.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+    .drop-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: background .1s, color .1s;
+    }
+    .drop-item:hover { background: var(--bg3); color: var(--accent); }
+    .drop-item:first-child { border-radius: var(--r) var(--r) 0 0; }
+    .drop-item:last-child  { border-radius: 0 0 var(--r) var(--r); }
+    .drop-item .di { font-size: 15px; }
+
+    /* ═══════════════════════════════════════════════════════
+       MAIN SPLIT
+    ═══════════════════════════════════════════════════════ */
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .editor-panel {
+      width: 38%;
+      min-width: 180px;
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .map-panel { flex: 1; min-width: 180px; }
+
+    .panel-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 8px;
+      height: 40px;
+    }
+
+    .panel-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      flex-shrink: 0;
+    }
+
+    .panel-actions { display: flex; gap: 4px; align-items: center; }
+
+    /* ═══════════════════════════════════════════════════════
+       EDITOR
+    ═══════════════════════════════════════════════════════ */
+    #editor {
+      flex: 1;
+      width: 100%;
+      resize: none;
+      border: none;
+      outline: none;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.65;
+      padding: 16px;
+      tab-size: 2;
+      overflow-y: auto;
+      caret-color: var(--accent);
+    }
+    #editor::placeholder { color: var(--text-subtle); }
+    #editor::-webkit-scrollbar { width: 6px; }
+    #editor::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #editor::-webkit-scrollbar-track { background: transparent; }
+
+    /* ═══════════════════════════════════════════════════════
+       RESIZER
+    ═══════════════════════════════════════════════════════ */
+    .resizer {
+      width: 4px;
+      background: var(--border-subtle);
+      cursor: col-resize;
+      flex-shrink: 0;
+      transition: background .15s;
+      position: relative;
+      z-index: 5;
+    }
+    .resizer:hover, .resizer.active { background: var(--accent); }
+
+    /* ═══════════════════════════════════════════════════════
+       MAP CONTAINER
+    ═══════════════════════════════════════════════════════ */
+    .map-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 40%, #13191f 0%, var(--bg) 100%);
+    }
+
+    /* subtle dot grid */
+    .map-container::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(48,54,61,.5) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #markmap-svg {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+      display: none;
+    }
+    #markmap-svg.visible {
+      display: block;
+      animation: fadeIn .4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(.98); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       EMPTY STATE
+    ═══════════════════════════════════════════════════════ */
+    #empty-state {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    #empty-state.hidden { display: none; }
+
+    .empty-orb {
+      font-size: 72px;
+      opacity: .12;
+      animation: breathe 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px #58a6ff);
+    }
+    @keyframes breathe {
+      0%,100% { transform: scale(1);   opacity: .12; }
+      50%      { transform: scale(1.06); opacity: .18; }
+    }
+
+    .empty-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 2;
+    }
+    .empty-text kbd {
+      display: inline-block;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-family: var(--font);
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       FLOATING MAP CONTROLS
+    ═══════════════════════════════════════════════════════ */
+    .float-controls {
+      position: absolute;
+      bottom: 18px;
+      right: 18px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .float-controls .btn {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      justify-content: center;
+      backdrop-filter: blur(12px);
+      background: rgba(22,27,34,.85);
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       LOADING OVERLAY
+    ═══════════════════════════════════════════════════════ */
+    #loading {
+      position: absolute;
+      inset: 0;
+      background: rgba(13,17,23,.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+    }
+    #loading.on { display: flex; }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════════════════
+       STATUS BAR
+    ═══════════════════════════════════════════════════════ */
+    .statusbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      height: 24px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #status {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: color .2s;
+    }
+    #status.ok    { color: var(--success); }
+    #status.err   { color: var(--danger); }
+    .shortcuts-hint { font-size: 11px; color: var(--text-subtle); }
+
+    /* ═══════════════════════════════════════════════════════
+       TOAST
+    ═══════════════════════════════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 12px;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity .2s, transform .2s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       MARKMAP OVERRIDES (dark theme)
+    ═══════════════════════════════════════════════════════ */
+    #markmap-svg text   { fill: #e6edf3 !important; }
+    #markmap-svg .markmap-foreign a { color: #58a6ff !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════════ */
+    @media (max-width: 700px) {
+      main { flex-direction: column; }
+      .editor-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); height: 45%; }
+      .map-panel    { height: 55%; }
+      .resizer      { width: 100%; height: 4px; cursor: row-resize; }
+      .logo-badge   { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HEADER
+═════════════════════════════════════════════════════════ -->
+<header>
+  <div class="logo">
+    <div class="logo-orb">🧠</div>
+    <span class="logo-title">Markmap Viewer</span>
+    <span class="logo-badge">TJCE</span>
+  </div>
+
+  <div class="header-right">
+    <div class="export-wrap">
+      <button class="btn" id="btn-export-toggle" onclick="toggleExportDrop()">
+        ⬇ Exportar <span style="font-size:10px; opacity:.7">▾</span>
+      </button>
+      <div class="export-drop" id="export-drop">
+        <div class="drop-item" onclick="exportSVG()">
+          <span class="di">🖼</span> SVG (vetorial)
+        </div>
+        <div class="drop-item" onclick="exportPNG()">
+          <span class="di">📷</span> PNG (imagem)
+        </div>
+        <div class="drop-item" onclick="exportHTML()">
+          <span class="di">🌐</span> HTML standalone
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════
+     MAIN
+═════════════════════════════════════════════════════════ -->
+<main id="main">
+
+  <!-- EDITOR -->
+  <div class="panel editor-panel" id="editor-panel">
+    <div class="panel-hdr">
+      <span class="panel-label">📝 Editor</span>
+      <div class="panel-actions">
+        <button class="btn btn-icon" onclick="loadTemplate()" title="Carregar template TJCE">Template</button>
+        <button class="btn btn-icon" onclick="clearEditor()" title="Limpar">🗑</button>
+        <button class="btn btn-primary" id="btn-render" onclick="render()">▶ Renderizar</button>
+      </div>
+    </div>
+    <textarea
+      id="editor"
+      spellcheck="false"
+      placeholder="Cole seu código Markmap aqui...&#10;&#10;Pressione Ctrl+Enter para renderizar."
+    ></textarea>
+  </div>
+
+  <!-- RESIZER -->
+  <div class="resizer" id="resizer"></div>
+
+  <!-- MAP -->
+  <div class="panel map-panel" id="map-panel">
+    <div class="panel-hdr">
+      <span class="panel-label">🗺 Visualizador</span>
+      <div class="panel-actions">
+        <div class="btn-group">
+          <button class="btn btn-icon" onclick="zoomBy(1.3)"  title="Zoom In">＋</button>
+          <button class="btn btn-icon" onclick="zoomBy(0.77)" title="Zoom Out">－</button>
+          <button class="btn btn-icon" onclick="fitMap()"     title="Ajustar">⊕</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-icon" onclick="expandAll()"  title="Expandir tudo">▼ Exp</button>
+          <button class="btn btn-icon" onclick="collapseAll()" title="Recolher tudo">▶ Col</button>
+        </div>
+      </div>
+    </div>
+    <div class="map-container" id="map-container">
+      <svg id="markmap-svg"></svg>
+
+      <div id="empty-state">
+        <div class="empty-orb">🧠</div>
+        <div class="empty-text">
+          Cole seu código Markmap no editor<br>
+          e pressione <kbd>Ctrl+Enter</kbd> para renderizar
+        </div>
+      </div>
+
+      <div id="loading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════
+     STATUS BAR
+═════════════════════════════════════════════════════════ -->
+<div class="statusbar">
+  <span id="status">Aguardando…</span>
+  <span class="shortcuts-hint">Ctrl+Enter: Renderizar &nbsp;·&nbsp; Scroll: Zoom &nbsp;·&nbsp; Drag: Mover</span>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     LIBS
+═════════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-lib/dist/browser/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view/dist/browser/index.js"></script>
+
+<!-- ══════════════════════════════════════════════════════
+     APP
+═════════════════════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────────────────
+   STATE
+───────────────────────────────────────────────────────── */
+let mm          = null;   // Markmap instance
+let transformer = null;   // Transformer instance
+
+/* ─────────────────────────────────────────────────────────
+   DEFAULT TEMPLATE  (padrão TJCE)
+───────────────────────────────────────────────────────── */
+const TEMPLATE = `---
+markmap:
+  initialExpandLevel: 2
+  maxWidth: 400
+  spacingHorizontal: 100
+  spacingVertical: 32
+---
+
+# <span style="font-size: 1.8em;">**Direito Penal** <br> Homicídio</span>
+
+- <span style="font-size: 1.3em;">**1. Homicídio Simples** <br> Art. 121, caput, CP</span> <!-- fold -->
+  - <span style="font-size: 1.1em;">**Pena:**</span>
+    - Reclusão de 6 a 20 anos
+    - Regime inicial: fechado se hediondo
+  - <span style="font-size: 1.1em;">**Elemento Subjetivo:**</span>
+    - Dolo direto ou eventual
+    - Culpa → homicídio culposo (§3°)
+
+- <span style="font-size: 1.3em;">**2. Qualificadoras** <br> Art. 121, §2°, CP</span> <!-- fold -->
+  - <span style="font-size: 1.1em;">**Motivo Torpe ou Fútil:**</span>
+    - Torpe: motivo abjeto, repugnante ⚖️
+    - Fútil: desproporcional ao crime
+  - <span style="font-size: 1.1em;">**Meio Cruel:**</span>
+    - Veneno, fogo, explosivo
+    - Asfixia, tortura
+  - > [!WARNING] **Atenção — STJ**
+    > ⚖️ Perturbação do sossego NÃO é motivo fútil.
+
+- <span style="font-size: 1.3em;">**3. Privilegiadoras** <br> Art. 121, §1°, CP</span> <!-- fold -->
+  - <span style="font-size: 1.1em;">**Requisitos:**</span>
+    - Relevante valor moral ou social
+    - 🍌 Pode coexistir com qualificadora objetiva`;
+
+/* ─────────────────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    transformer = new markmap.Transformer();
+    setStatus('Biblioteca carregada ✓');
+  } catch (e) {
+    setStatus('Erro ao inicializar a lib: ' + e.message, 'err');
+  }
+  setupResizer();
+  setupKeyboard();
+  document.addEventListener('click', e => {
+    if (!document.querySelector('.export-wrap').contains(e.target)) {
+      closeExportDrop();
+    }
+  });
+});
+
+/* ─────────────────────────────────────────────────────────
+   RENDER
+───────────────────────────────────────────────────────── */
+async function render() {
+  const md = document.getElementById('editor').value.trim();
+  if (!md)          { toast('⚠️ Editor vazio!');               return; }
+  if (!transformer) { toast('Aguarde…'); return; }
+
+  loading(true);
+  setStatus('Renderizando…');
+
+  try {
+    await tick(); // allow spinner to paint
+
+    const { root, features, frontmatter } = transformer.transform(md);
+
+    /* load feature assets (math, mermaid, etc.) */
+    const { styles, scripts } = transformer.getUsedAssets(features);
+    if (styles?.length)  markmap.loadCSS(styles);
+    if (scripts?.length) await markmap.loadJS(scripts, { getMarkmap: () => window.markmap });
+
+    const svg = document.getElementById('markmap-svg');
+
+    /* derive options from frontmatter */
+    const fmOpts = frontmatter?.markmap ?? {};
+    const opts   = typeof markmap.deriveOptions === 'function'
+      ? markmap.deriveOptions(fmOpts)
+      : fmOpts;
+
+    if (mm) {
+      await mm.setData(root, opts);
+      mm.fit();
+    } else {
+      mm = markmap.Markmap.create(svg, opts, root);
+    }
+
+    svg.classList.add('visible');
+    document.getElementById('empty-state').classList.add('hidden');
+
+    const n = countNodes(root);
+    setStatus(`✓ ${n} nós renderizados`, 'ok');
+    toast('✅ Mapa renderizado!');
+
+  } catch (e) {
+    setStatus('Erro: ' + e.message, 'err');
+    toast('❌ ' + e.message);
+    console.error(e);
+  } finally {
+    loading(false);
+  }
+}
+
+function countNodes(node) {
+  if (!node) return 0;
+  let n = 1;
+  node.children?.forEach(c => n += countNodes(c));
+  return n;
+}
+
+/* ─────────────────────────────────────────────────────────
+   MAP CONTROLS
+───────────────────────────────────────────────────────── */
+function zoomBy(factor) {
+  if (!mm) return;
+  const svgSel = d3.select('#markmap-svg');
+  if (mm.zoom) {
+    mm.zoom.scaleBy(svgSel.transition().duration(250), factor);
+  }
+}
+
+function fitMap()     { mm?.fit(); }
+
+function expandAll() {
+  if (!mm) return;
+  walkFold(mm.state?.data ?? mm.state, false);
+  mm.renderData?.();
+  mm.fit();
+}
+
+function collapseAll() {
+  if (!mm) return;
+  walkFold(mm.state?.data ?? mm.state, true);
+  mm.renderData?.();
+  mm.fit();
+}
+
+function walkFold(node, fold) {
+  if (!node) return;
+  if (!node.payload) node.payload = {};
+  node.payload.fold = fold ? 2 : 0;
+  node.children?.forEach(c => walkFold(c, fold));
+}
+
+/* ─────────────────────────────────────────────────────────
+   EXPORT
+───────────────────────────────────────────────────────── */
+function filename(ext) {
+  const md  = document.getElementById('editor').value;
+  const m   = md.match(/^#[^\n]*/m);
+  let base  = 'markmap';
+  if (m) {
+    base = m[0]
+      .replace(/<[^>]+>/g, '')
+      .replace(/[^a-zA-ZÀ-ú0-9\s]/g, '')
+      .trim()
+      .replace(/\s+/g, '_')
+      .toLowerCase()
+      .slice(0, 50) || 'markmap';
+  }
+  return `${base}.${ext}`;
+}
+
+function exportSVG() {
+  const svgEl = document.getElementById('markmap-svg');
+  if (!svgEl.classList.contains('visible')) { toast('⚠️ Renderize primeiro!'); return; }
+
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  // Inject computed markmap styles
+  const rules = [];
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule.selectorText?.includes('markmap')) rules.push(rule.cssText);
+      }
+    } catch {}
+  }
+  const defs  = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  style.textContent = `svg { background:#0d1117; } text { fill:#e6edf3; } ${rules.join('\n')}`;
+  defs.appendChild(style);
+  clone.insertBefore(defs, clone.firstChild);
+
+  dl(new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' }), filename('svg'));
+  toast('✅ SVG exportado!');
+  closeExportDrop();
+}
+
+async function exportPNG() {
+  const svgEl = document.getElementById('markmap-svg');
+  if (!svgEl.classList.contains('visible')) { toast('⚠️ Renderize primeiro!'); return; }
+  closeExportDrop();
+  toast('⏳ Gerando PNG…');
+
+  try {
+    const scale  = 2;
+    const box    = svgEl.getBoundingClientRect();
+    const W      = box.width  * scale;
+    const H      = box.height * scale;
+
+    const clone  = svgEl.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('width',  W);
+    clone.setAttribute('height', H);
+
+    // embed font via @import so canvas renders it
+    const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    style.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+      text { fill: #e6edf3; font-family: Inter, sans-serif; }
+    `;
+    clone.insertBefore(style, clone.firstChild);
+
+    const svgStr = new XMLSerializer().serializeToString(clone);
+    const url    = URL.createObjectURL(new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' }));
+
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    canvas.toBlob(blob => {
+      dl(blob, filename('png'));
+      toast('✅ PNG exportado!');
+    }, 'image/png');
+  } catch (e) {
+    toast('❌ Erro PNG: ' + e.message);
+    console.error(e);
+  }
+}
+
+function exportHTML() {
+  const md = document.getElementById('editor').value.trim();
+  if (!md) { toast('⚠️ Editor vazio!'); return; }
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Markmap Export</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0d1117}
+    svg{width:100vw;height:100vh;display:block}
+    text{fill:#e6edf3!important}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-lib/dist/browser/index.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-view/dist/browser/index.js"><\/script>
+</head>
+<body>
+  <svg id="mm"></svg>
+  <script>
+    const md = ${JSON.stringify(md)};
+    window.addEventListener('load', async () => {
+      const t = new markmap.Transformer();
+      const { root, features, frontmatter } = t.transform(md);
+      const { styles, scripts } = t.getUsedAssets(features);
+      if (styles?.length) markmap.loadCSS(styles);
+      if (scripts?.length) await markmap.loadJS(scripts, { getMarkmap: () => window.markmap });
+      const opts = typeof markmap.deriveOptions === 'function'
+        ? markmap.deriveOptions(frontmatter?.markmap ?? {})
+        : (frontmatter?.markmap ?? {});
+      markmap.Markmap.create(document.getElementById('mm'), opts, root);
+    });
+  <\/script>
+</body>
+</html>`;
+
+  dl(new Blob([html], { type: 'text/html;charset=utf-8' }), filename('html'));
+  toast('✅ HTML exportado!');
+  closeExportDrop();
+}
+
+function dl(blob, name) {
+  const a  = document.createElement('a');
+  a.href   = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ─────────────────────────────────────────────────────────
+   EDITOR HELPERS
+───────────────────────────────────────────────────────── */
+function loadTemplate() {
+  const ed = document.getElementById('editor');
+  if (ed.value && !confirm('Substituir conteúdo pelo template TJCE?')) return;
+  ed.value = TEMPLATE;
+  ed.focus();
+}
+
+function clearEditor() {
+  const ed = document.getElementById('editor');
+  if (!ed.value) return;
+  if (confirm('Limpar editor?')) { ed.value = ''; ed.focus(); }
+}
+
+/* ─────────────────────────────────────────────────────────
+   EXPORT DROPDOWN
+───────────────────────────────────────────────────────── */
+function toggleExportDrop() { document.getElementById('export-drop').classList.toggle('open'); }
+function closeExportDrop()  { document.getElementById('export-drop').classList.remove('open'); }
+
+/* ─────────────────────────────────────────────────────────
+   KEYBOARD
+───────────────────────────────────────────────────────── */
+function setupKeyboard() {
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); render(); }
+    if (e.key === 'Escape') closeExportDrop();
+  });
+
+  // Tab → 2 spaces in textarea
+  document.getElementById('editor').addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    const ta = e.target;
+    const s  = ta.selectionStart;
+    ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(ta.selectionEnd);
+    ta.selectionStart = ta.selectionEnd = s + 2;
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   RESIZER (drag to resize panels)
+───────────────────────────────────────────────────────── */
+function setupResizer() {
+  const resizer    = document.getElementById('resizer');
+  const edPanel    = document.getElementById('editor-panel');
+  const mainEl     = document.getElementById('main');
+  let dragging     = false;
+
+  resizer.addEventListener('mousedown', () => {
+    dragging = true;
+    resizer.classList.add('active');
+    document.body.style.cursor    = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const rect = mainEl.getBoundingClientRect();
+    const pct  = ((e.clientX - rect.left) / rect.width) * 100;
+    edPanel.style.width = Math.max(18, Math.min(72, pct)) + '%';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    resizer.classList.remove('active');
+    document.body.style.cursor    = '';
+    document.body.style.userSelect = '';
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   UI UTILS
+───────────────────────────────────────────────────────── */
+function setStatus(msg, cls = '') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className   = cls;
+}
+
+function loading(on) {
+  document.getElementById('loading').classList.toggle('on', on);
+}
+
+let _toastTimer;
+function toast(msg, ms = 2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function tick() { return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
+</script>
+
+</body>
+</html>
