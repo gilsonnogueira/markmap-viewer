@@ -469,10 +469,41 @@
     }
 
     /* ═══════════════════════════════════════════════════════
-       MARKMAP OVERRIDES (dark theme)
+       MARKMAP OVERRIDES (dark theme & fixes)
     ═══════════════════════════════════════════════════════ */
     #markmap-svg text   { fill: #e6edf3 !important; }
+    #markmap-svg foreignObject { color: #e6edf3 !important; }
+    #markmap-svg foreignObject * { color: inherit; }
+    #markmap-svg foreignObject strong,
+    #markmap-svg foreignObject b { color: #58a6ff !important; }
     #markmap-svg .markmap-foreign a { color: #58a6ff !important; }
+
+    /* Estilos para Callouts e Tabelas injetados */
+    .mm-callout {
+      border-left: 4px solid #58a6ff;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 6px 0;
+      min-width: 250px;
+    }
+    .mm-table {
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 0.9em;
+      background: var(--bg2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .mm-table th, .mm-table td {
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+    }
+    .mm-table th {
+      background: var(--bg3);
+      font-weight: 600;
+      color: #58a6ff;
+    }
 
     /* ═══════════════════════════════════════════════════════
        RESPONSIVE
@@ -672,10 +703,91 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ─────────────────────────────────────────────────────────
+   PREPROCESSOR (Tabelas, Callouts e Limpeza)
+───────────────────────────────────────────────────────── */
+function preprocessMD(md) {
+  // 1. Remove marcadores markdown globais
+  md = md.replace(/^```[a-z]*\n/gi, '').replace(/\n```$/g, '');
+
+  const lines = md.split('\n');
+  const out = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // 2. Parser de Callouts do Obsidian: `  - > [!WARNING] Titulo`
+    const calloutMatch = line.match(/^(\s*)(?:-\s*)?>\s*\[!([A-Za-z]+)\](.*)/);
+    if (calloutMatch) {
+      let indent = calloutMatch[1];
+      let type = calloutMatch[2].toLowerCase();
+      let title = calloutMatch[3].trim();
+      
+      let colors = { warning: '#d97706', danger: '#ef4444', error: '#ef4444', success: '#22c55e', info: '#3b82f6' };
+      let icons = { warning: '⚠️', danger: '🚫', error: '🚫', success: '✅', info: 'ℹ️' };
+      
+      let color = colors[type] || '#8b5cf6';
+      let icon = icons[type] || '💡';
+      
+      title = title ? title.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : type.toUpperCase();
+      
+      let html = `<div class="mm-callout" style="border-left-color: ${color};">`;
+      html += `<div style="font-weight:bold; color:${color}; margin-bottom: 4px;">${icon} ${title}</div>`;
+      
+      let j = i + 1;
+      while (j < lines.length) {
+        let nextMatch = lines[j].match(/^(\s*)>(.*)/);
+        if (nextMatch && !lines[j].match(/^(\s*)(?:-\s*)?>\s*\[!/)) {
+          let text = nextMatch[2].trim();
+          text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          html += `<div>${text}</div>`;
+          j++;
+        } else {
+          break;
+        }
+      }
+      html += `</div>`;
+      out.push(`${indent}- ${html}`);
+      i = j - 1;
+      continue;
+    }
+
+    // 3. Parser de Tabelas: `  - | Col 1 | Col 2 |`
+    const tableMatch = line.match(/^(\s*)(?:-\s*)?\|(.*)\|?\s*$/);
+    const nextLine = lines[i+1] || "";
+    if (tableMatch && nextLine.match(/^\s*\|?[\s-:]+\|?\s*$/) && nextLine.includes('-')) {
+       let indent = tableMatch[1];
+       let parseRow = (str) => str.split('|').map(s => s.trim()).filter((s, idx, arr) => !(s==='' && (idx===0 || idx===arr.length-1)));
+       
+       let headers = parseRow(tableMatch[2]);
+       let html = `<table class="mm-table"><thead><tr>` + headers.map(h => `<th>${h}</th>`).join('') + `</tr></thead><tbody>`;
+       
+       let j = i + 2;
+       while(j < lines.length) {
+         let rMatch = lines[j].match(/^\s*\|(.*)\|?\s*$/);
+         if (rMatch) {
+           let cells = parseRow(rMatch[1]);
+           html += `<tr>` + cells.map(c => `<td>${c}</td>`).join('') + `</tr>`;
+           j++;
+         } else {
+           break;
+         }
+       }
+       html += `</tbody></table>`;
+       out.push(`${indent}- ${html}`);
+       i = j - 1;
+       continue;
+    }
+
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
+/* ─────────────────────────────────────────────────────────
    RENDER
 ───────────────────────────────────────────────────────── */
 async function render() {
-  const md = document.getElementById('editor').value.trim();
+  let md = document.getElementById('editor').value.trim();
   if (!md)          { toast('⚠️ Editor vazio!');               return; }
   if (!transformer) { toast('Aguarde…'); return; }
 
@@ -683,8 +795,9 @@ async function render() {
   setStatus('Renderizando…');
 
   try {
-    await tick(); // allow spinner to paint
-
+    await tick();
+    md = preprocessMD(md);
+    
     const { root, features, frontmatter } = transformer.transform(md);
 
     /* load feature assets (math, mermaid, etc.) */
