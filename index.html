@@ -922,6 +922,14 @@ function exportSVG() {
 
   const clone = svgEl.cloneNode(true);
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  
+  // Corrige o corte centralizando perfeitamente pelo conteúdo real
+  const bbox = svgEl.querySelector('g').getBBox();
+  const margin = Math.max(bbox.width, bbox.height) * 0.05;
+  clone.setAttribute('viewBox', `${bbox.x - margin} ${bbox.y - margin} ${bbox.width + margin*2} ${bbox.height + margin*2}`);
+  clone.setAttribute('width', '100%');
+  clone.setAttribute('height', '100%');
+  clone.querySelector('g').setAttribute('transform', '');
 
   // Inject computed markmap styles
   const rules = [];
@@ -951,14 +959,17 @@ async function exportPNG() {
 
   try {
     const scale  = 2;
-    const box    = svgEl.getBoundingClientRect();
-    const W      = box.width  * scale;
-    const H      = box.height * scale;
+    const bbox = svgEl.querySelector('g').getBBox();
+    const margin = Math.max(bbox.width, bbox.height) * 0.05;
+    const W = (bbox.width + margin*2) * scale;
+    const H = (bbox.height + margin*2) * scale;
 
     const clone  = svgEl.cloneNode(true);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('viewBox', `${bbox.x - margin} ${bbox.y - margin} ${bbox.width + margin*2} ${bbox.height + margin*2}`);
     clone.setAttribute('width',  W);
     clone.setAttribute('height', H);
+    clone.querySelector('g').setAttribute('transform', '');
 
     // embed font via @import so canvas renders it
     const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
@@ -1047,12 +1058,17 @@ function exportPDF(theme) {
   if (!svgEl.classList.contains('visible')) { toast('⚠️ Renderize primeiro!'); return; }
   closeExportDrop();
 
-  // Fit antes de serializar para garantir que o mapa está centralizado
-  mm?.fit();
-
   const svgClone = svgEl.cloneNode(true);
   svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   svgClone.removeAttribute('style'); // deixa o CSS da janela controlar
+
+  // Resolve o problema de corte recalculando a área real do conteúdo
+  const bbox = svgEl.querySelector('g').getBBox();
+  const margin = Math.max(bbox.width, bbox.height) * 0.05;
+  svgClone.setAttribute('viewBox', `${bbox.x - margin} ${bbox.y - margin} ${bbox.width + margin*2} ${bbox.height + margin*2}`);
+  svgClone.setAttribute('width', '100%');
+  svgClone.setAttribute('height', '100%');
+  svgClone.querySelector('g').setAttribute('transform', '');
 
   const themes = {
     normal: {
