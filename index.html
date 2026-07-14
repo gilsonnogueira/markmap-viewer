@@ -916,6 +916,37 @@ function filename(ext) {
   return `${base}.${ext}`;
 }
 
+/* ─────────────────────────────────────────────────────────
+   HELPER: Calcula BBox exato (corrige bug do Chrome com foreignObject)
+───────────────────────────────────────────────────────── */
+function getMapBBox(svgEl) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const nodes = svgEl.querySelectorAll('g.markmap-node');
+  
+  if (nodes.length === 0) return svgEl.querySelector('g').getBBox();
+
+  nodes.forEach(node => {
+    const transform = node.getAttribute('transform');
+    if (transform) {
+      const match = transform.match(/translate\(([^,]+)[,\s]+([^)]+)\)/);
+      if (match) {
+        const x = parseFloat(match[1]);
+        const y = parseFloat(match[2]);
+        const fo = node.querySelector('foreignObject');
+        const w = fo ? parseFloat(fo.getAttribute('width') || 0) : 0;
+        const h = fo ? parseFloat(fo.getAttribute('height') || 0) : 0;
+        
+        minX = Math.min(minX, x - 20);
+        minY = Math.min(minY, y - 20);
+        maxX = Math.max(maxX, x + w + 20);
+        maxY = Math.max(maxY, y + h + 20);
+      }
+    }
+  });
+
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
 function exportSVG() {
   const svgEl = document.getElementById('markmap-svg');
   if (!svgEl.classList.contains('visible')) { toast('⚠️ Renderize primeiro!'); return; }
@@ -924,7 +955,7 @@ function exportSVG() {
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   
   // Corrige o corte centralizando perfeitamente pelo conteúdo real
-  const bbox = svgEl.querySelector('g').getBBox();
+  const bbox = getMapBBox(svgEl);
   const margin = Math.max(bbox.width, bbox.height) * 0.05;
   clone.setAttribute('viewBox', `${bbox.x - margin} ${bbox.y - margin} ${bbox.width + margin*2} ${bbox.height + margin*2}`);
   clone.setAttribute('width', '100%');
@@ -959,7 +990,7 @@ async function exportPNG() {
 
   try {
     const scale  = 2;
-    const bbox = svgEl.querySelector('g').getBBox();
+    const bbox = getMapBBox(svgEl);
     const margin = Math.max(bbox.width, bbox.height) * 0.05;
     const W = (bbox.width + margin*2) * scale;
     const H = (bbox.height + margin*2) * scale;
@@ -1063,7 +1094,7 @@ function exportPDF(theme) {
   svgClone.removeAttribute('style'); // deixa o CSS da janela controlar
 
   // Resolve o problema de corte recalculando a área real do conteúdo
-  const bbox = svgEl.querySelector('g').getBBox();
+  const bbox = getMapBBox(svgEl);
   const margin = Math.max(bbox.width, bbox.height) * 0.05;
   svgClone.setAttribute('viewBox', `${bbox.x - margin} ${bbox.y - margin} ${bbox.width + margin*2} ${bbox.height + margin*2}`);
   svgClone.setAttribute('width', '100%');
