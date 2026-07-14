@@ -36,6 +36,38 @@
       --mono:          'JetBrains Mono', 'Fira Code', monospace;
     }
 
+    :root[data-theme="light"] {
+      --bg:            #ffffff;
+      --bg2:           #f6f8fa;
+      --bg3:           #eaeef2;
+      --border:        #d0d7de;
+      --border-subtle: #eaeef2;
+      --text:          #1f2328;
+      --text-muted:    #656d76;
+      --text-subtle:   #8c959f;
+      --accent:        #0969da;
+      --accent-dim:    rgba(9,105,218,.15);
+      --success:       #1a7f37;
+      --danger:        #cf222e;
+    }
+
+    :root[data-theme="eink"] {
+      --bg:            #ffffff;
+      --bg2:           #ffffff;
+      --bg3:           #f0f0f0;
+      --border:        #000000;
+      --border-subtle: #000000;
+      --text:          #000000;
+      --text-muted:    #000000;
+      --text-subtle:   #000000;
+      --accent:        #000000;
+      --accent-dim:    rgba(0,0,0,.05);
+      --primary:       #000000;
+      --primary-h:     #333333;
+      --success:       #000000;
+      --danger:        #000000;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -225,6 +257,10 @@
       min-width: 180px;
       border-right: 1px solid var(--border);
       flex-shrink: 0;
+      transition: width 0.3s ease;
+    }
+    .editor-panel.hidden {
+      display: none !important;
     }
 
     .map-panel { flex: 1; min-width: 180px; }
@@ -297,18 +333,7 @@
       flex: 1;
       position: relative;
       overflow: hidden;
-      background: radial-gradient(ellipse at 50% 40%, #13191f 0%, var(--bg) 100%);
-    }
-
-    /* subtle dot grid */
-    .map-container::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle, rgba(48,54,61,.5) 1px, transparent 1px);
-      background-size: 32px 32px;
-      pointer-events: none;
-      z-index: 0;
+      background: var(--bg);
     }
 
     #markmap-svg {
@@ -471,12 +496,16 @@
     /* ═══════════════════════════════════════════════════════
        MARKMAP OVERRIDES (dark theme & fixes)
     ═══════════════════════════════════════════════════════ */
-    #markmap-svg text   { fill: #e6edf3 !important; }
-    #markmap-svg foreignObject { color: #e6edf3 !important; }
+    #markmap-svg text   { fill: var(--text) !important; }
+    #markmap-svg foreignObject { color: var(--text) !important; }
     #markmap-svg foreignObject * { color: inherit; }
     #markmap-svg foreignObject strong,
-    #markmap-svg foreignObject b { color: #58a6ff !important; }
-    #markmap-svg .markmap-foreign a { color: #58a6ff !important; }
+    #markmap-svg foreignObject b { color: var(--accent) !important; }
+    #markmap-svg .markmap-foreign a { color: var(--accent) !important; }
+    
+    :root[data-theme="eink"] #markmap-svg .markmap-node circle,
+    :root[data-theme="eink"] #markmap-svg .markmap-node path,
+    :root[data-theme="eink"] #markmap-svg path.markmap-link { stroke: #000000 !important; }
 
     /* Estilos para Callouts, Tabelas e Highlights injetados */
     #markmap-svg foreignObject mark {
@@ -538,6 +567,12 @@
   </div>
 
   <div class="header-right">
+    <select id="theme-selector" onchange="setTheme(this.value)" style="background: var(--bg2); color: var(--text); border: 1px solid var(--border); padding: 4px 8px; border-radius: var(--r); font-size: 12px; outline: none; cursor: pointer;">
+      <option value="dark">🌑 Dark</option>
+      <option value="light">☀️ Claro</option>
+      <option value="eink">📖 E-ink</option>
+    </select>
+    <button class="btn" onclick="toggleEditor()" id="btn-toggle-editor" title="Ocultar Código">👁️ Editor</button>
     <div class="export-wrap">
       <button class="btn" id="btn-export-toggle" onclick="toggleExportDrop()">
         ⬇ Exportar <span style="font-size:10px; opacity:.7">▾</span>
@@ -654,6 +689,27 @@
 ───────────────────────────────────────────────────────── */
 let mm          = null;   // Markmap instance
 let transformer = null;   // Transformer instance
+
+function toggleEditor() {
+  const editor = document.getElementById('editor-panel');
+  const resizer = document.getElementById('resizer');
+  if (editor.classList.contains('hidden')) {
+    editor.classList.remove('hidden');
+    resizer.style.display = 'block';
+  } else {
+    editor.classList.add('hidden');
+    resizer.style.display = 'none';
+  }
+  if (mm) setTimeout(() => mm.fit(), 300);
+}
+
+function setTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+}
 
 /* ─────────────────────────────────────────────────────────
    DEFAULT TEMPLATE  (padrão TJCE)
