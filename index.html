@@ -933,13 +933,31 @@ function getMapBBox(svgEl) {
         const x = parseFloat(match[1]);
         const y = parseFloat(match[2]);
         const fo = node.querySelector('foreignObject');
-        const w = fo ? parseFloat(fo.getAttribute('width') || 0) : 0;
-        const h = fo ? parseFloat(fo.getAttribute('height') || 0) : 0;
+        let w = 0, h = 0;
+        if (fo) {
+          w = parseFloat(fo.getAttribute('width'));
+          if (isNaN(w) || w <= 0) w = parseFloat(fo.style.width);
+          if (isNaN(w) || w <= 0) w = fo.clientWidth;
+          if (isNaN(w) || w <= 0) {
+            const div = fo.querySelector('div');
+            if (div) w = div.offsetWidth || div.getBoundingClientRect().width;
+          }
+          if (isNaN(w)) w = 0;
+          
+          h = parseFloat(fo.getAttribute('height'));
+          if (isNaN(h) || h <= 0) h = parseFloat(fo.style.height);
+          if (isNaN(h) || h <= 0) h = fo.clientHeight;
+          if (isNaN(h) || h <= 0) {
+            const div = fo.querySelector('div');
+            if (div) h = div.offsetHeight || div.getBoundingClientRect().height;
+          }
+          if (isNaN(h)) h = 0;
+        }
         
         minX = Math.min(minX, x - 20);
         minY = Math.min(minY, y - 20);
-        maxX = Math.max(maxX, x + w + 20);
-        maxY = Math.max(maxY, y + h + 20);
+        maxX = Math.max(maxX, x + w + 30);
+        maxY = Math.max(maxY, y + h + 30);
       }
     }
   });
@@ -1212,8 +1230,22 @@ function exportPDF(theme) {
     
     /* controles de impressão */
     @media print {
-      body { background: ${t.pageBg} !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      svg  { width: 100vw !important; height: 100vh !important; }
+      @page { margin: 0; }
+      body { 
+        background: ${t.pageBg} !important; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+        margin: 0; 
+        padding: 5mm; 
+        box-sizing: border-box;
+      }
+      svg { 
+        width: 100% !important; 
+        height: 100% !important; 
+        max-width: 100% !important; 
+        max-height: 100% !important; 
+        object-fit: contain;
+      }
     }
   </style>
 </head>
