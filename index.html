@@ -32,7 +32,7 @@
       --r:             6px;
       --r-lg:          12px;
       --shadow:        0 8px 32px rgba(1,4,9,.9);
-      --font:          'Inter', -apple-system, sans-serif;
+      --font:          system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --mono:          'JetBrains Mono', 'Fira Code', monospace;
     }
 
@@ -497,7 +497,7 @@
        MARKMAP OVERRIDES (dark theme & fixes)
     ═══════════════════════════════════════════════════════ */
     #markmap-svg text   { fill: var(--text) !important; }
-    #markmap-svg foreignObject { color: var(--text) !important; }
+    #markmap-svg foreignObject { color: var(--text) !important; font-weight: 500; font-size: 14px; }
     #markmap-svg foreignObject * { color: inherit; }
     #markmap-svg foreignObject strong,
     #markmap-svg foreignObject b { color: var(--accent) !important; }
@@ -851,8 +851,13 @@ function preprocessMD(md) {
 
     // 4. Inline formatting (Highlights e Checkboxes)
     line = line.replace(/==(.*?)==/g, '<mark>$1</mark>');
-    line = line.replace(/^(\s*-\s*)\[[xX]\]\s+(.*)/, '$1<input type="checkbox" checked disabled style="margin:0 6px 0 0; vertical-align:middle; accent-color: var(--accent);"> $2');
-    line = line.replace(/^(\s*-\s*)\[ \]\s+(.*)/, '$1<input type="checkbox" disabled style="margin:0 6px 0 0; vertical-align:middle;"> $2');
+    
+    // Checkboxes (usando <span> para evitar bloqueio do DOMPurify)
+    const checkedBox = `<span style="display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border:1px solid var(--accent); border-radius:3px; background:var(--accent); color:#fff; font-size:11px; margin-right:6px; vertical-align:middle; position:relative; top:-1px;">✓</span>`;
+    const uncheckedBox = `<span style="display:inline-block; width:14px; height:14px; border:1px solid var(--text-muted); border-radius:3px; background:transparent; margin-right:6px; vertical-align:middle; position:relative; top:-1px;"></span>`;
+    
+    line = line.replace(/^(\s*[-*]\s*)\[\s*[xX]\s*\]\s+(.*)/, `$1${checkedBox}$2`);
+    line = line.replace(/^(\s*[-*]\s*)\[\s*\]\s+(.*)/, `$1${uncheckedBox}$2`);
 
     out.push(line);
   }
