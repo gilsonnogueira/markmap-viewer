@@ -1427,8 +1427,9 @@ async function driveOpenFile(f) {
 function driveNewFolder() {
   openDriveModal('Nome da nova pasta', 'Nova Pasta', async (name) => {
     try {
+      const targetParent = currentFolderId === 'home' ? await ensureRootFolder() : currentFolderId;
       await gapi.client.drive.files.create({
-        resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: [currentFolderId] },
+        resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: [targetParent] },
         fields: 'id',
       });
       driveListFiles(currentFolderId);
@@ -1461,9 +1462,9 @@ async function driveSaveFile() {
       // Novo arquivo
       openDriveModal('Nome do arquivo', 'Meu Mapa', async (name) => {
         try {
-          const rootId = await ensureRootFolder();
+          const targetParent = currentFolderId === 'home' ? await ensureRootFolder() : currentFolderId;
           const boundary = '-------314159265358979323846';
-          const meta = JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [rootId] });
+          const meta = JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [targetParent] });
           const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: text/plain\r\n\r\n${content}\r\n--${boundary}--`;
           
           const res = await gapi.client.request({
