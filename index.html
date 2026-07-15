@@ -852,12 +852,12 @@ function preprocessMD(md) {
     // 4. Inline formatting (Highlights e Checkboxes)
     line = line.replace(/==(.*?)==/g, '<mark>$1</mark>');
     
-    // Checkboxes (usando <span> para evitar bloqueio do DOMPurify)
-    const checkedBox = `<span style="display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border:1px solid var(--accent); border-radius:3px; background:var(--accent); color:#fff; font-size:11px; margin-right:6px; vertical-align:middle; position:relative; top:-1px;">✓</span>`;
-    const uncheckedBox = `<span style="display:inline-block; width:14px; height:14px; border:1px solid var(--text-muted); border-radius:3px; background:transparent; margin-right:6px; vertical-align:middle; position:relative; top:-1px;"></span>`;
+    // Checkboxes (Substituição Global + Unicode para ser à prova de falhas do DOMPurify e Markdown)
+    const checkedBox = `<span style="color: var(--accent); font-weight: bold; font-size: 1.1em; margin-right: 4px; vertical-align: middle;">☑</span>`;
+    const uncheckedBox = `<span style="color: var(--text-muted); font-size: 1.1em; margin-right: 4px; vertical-align: middle;">☐</span>`;
     
-    line = line.replace(/^(\s*[-*]\s*)\[\s*[xX]\s*\]\s+(.*)/, `$1${checkedBox}$2`);
-    line = line.replace(/^(\s*[-*]\s*)\[\s*\]\s+(.*)/, `$1${uncheckedBox}$2`);
+    line = line.replace(/\[[xX]\]/g, checkedBox);
+    line = line.replace(/\[\s+\]/g, uncheckedBox);
 
     out.push(line);
   }
