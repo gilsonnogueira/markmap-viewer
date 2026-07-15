@@ -1049,9 +1049,9 @@
 <script src="https://cdn.jsdelivr.net/npm/markmap-lib/dist/browser/index.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/markmap-view/dist/browser/index.js"></script>
 
-<!-- Google APIs -->
-<script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-<script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+<!-- Google APIs (sem async/defer para garantir callbacks) -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
 
 <!-- ══════════════════════════════════════════════════════
      APP
@@ -1069,51 +1069,80 @@ let gapiInited = false;
 let gisInited = false;
 
 function gapiLoaded() {
-  gapi.load('client', intializeGapiClient);
-}
-
-async function intializeGapiClient() {
-  await gapi.client.init({
-    apiKey: API_KEY,
-    discoveryDocs: [DISCOVERY_DOC],
+  gapi.load('client', async () => {
+    try {
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: [DISCOVERY_DOC],
+      });
+      gapiInited = true;
+      console.log('[Drive] GAPI pronto.');
+      maybeEnableButtons();
+    } catch(e) {
+      console.error('[Drive] Erro no init GAPI:', e);
+      const btn = document.getElementById('btn-gdrive');
+      if (btn) btn.title = 'Erro: ' + (e.details || e.message || JSON.stringify(e));
+    }
   });
-  gapiInited = true;
-  maybeEnableButtons();
 }
 
 function gisLoaded() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: '', // definido na chamada
-  });
-  gisInited = true;
-  maybeEnableButtons();
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: '',
+    });
+    gisInited = true;
+    console.log('[Drive] GIS pronto.');
+    maybeEnableButtons();
+  } catch(e) {
+    console.error('[Drive] Erro no init GIS:', e);
+  }
 }
 
 function maybeEnableButtons() {
   if (gapiInited && gisInited) {
     const btn = document.getElementById('btn-gdrive');
-    if (btn) btn.innerText = 'Entrar no Drive';
+    if (btn) {
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Entrar no Drive`;
+      btn.disabled = false;
+    }
+    console.log('[Drive] Botão pronto.');
   }
 }
 
 function handleAuthClick() {
+  if (!gapiInited || !gisInited) {
+    // Tenta inicializar na hora caso ainda não esteja pronto
+    if (typeof gapi !== 'undefined' && !gapiInited) gapiLoaded();
+    if (typeof google !== 'undefined' && !gisInited) gisLoaded();
+    showToast('Conectando ao Google... tente novamente em 2s.');
+    return;
+  }
   tokenClient.callback = async (resp) => {
     if (resp.error !== undefined) {
-      throw (resp);
+      showToast('Erro ao conectar: ' + resp.error);
+      console.error('[Drive] Auth error:', resp);
+      return;
     }
-    document.getElementById('btn-gdrive').style.display = 'none';
-    showToast('Conectado ao Google Drive com sucesso!');
+    showToast('☁️ Conectado ao Google Drive!');
     onDriveLoggedIn();
   };
-
   if (gapi.client.getToken() === null) {
     tokenClient.requestAccessToken({prompt: 'consent'});
   } else {
     tokenClient.requestAccessToken({prompt: ''});
   }
 }
+
+// Dispara init quando a página carregar
+window.addEventListener('load', () => {
+  if (typeof gapi !== 'undefined') gapiLoaded();
+  else console.warn('[Drive] gapi não encontrado.');
+  if (typeof google !== 'undefined') gisLoaded();
+  else console.warn('[Drive] google não encontrado.');
+});
 // -----------------------------------------------
 
 /* ─────────────────────────────────────────────────────────
