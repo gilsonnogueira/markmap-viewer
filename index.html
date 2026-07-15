@@ -1009,9 +1009,11 @@
   </div>
 
   <div class="drive-actions">
-    <button class="btn btn-primary" onclick="driveSaveFile()" style="flex:1; justify-content:center; gap:5px;">
+    <button class="btn btn-primary" onclick="driveSaveFile()" style="flex:1; justify-content:center; gap:5px;" title="Salvar Mapa">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      Salvar mapa
+    </button>
+    <button class="btn btn-primary" onclick="openDrivePicker()" style="flex:1; justify-content:center; gap:5px; background:var(--bg3); color:var(--text); border-color:var(--border);" title="Pesquisar em todo o Drive">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
     <button class="btn btn-icon" onclick="driveNewFolder()" title="Nova pasta">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
@@ -1069,7 +1071,7 @@ let gapiInited = false;
 let gisInited = false;
 
 function gapiLoaded() {
-  gapi.load('client', async () => {
+  gapi.load('client:picker', async () => {
     try {
       await gapi.client.init({
         apiKey: API_KEY,
@@ -1378,6 +1380,38 @@ async function loadSharedMap() {
     render();
   } catch(e) {
     showToast('Não foi possível carregar o mapa: ' + e.message);
+  }
+}
+
+// -------------------------------------------------------------
+// GOOGLE PICKER (Para buscar arquivos antigos/externos)
+// -------------------------------------------------------------
+function openDrivePicker() {
+  if (!driveLoggedIn) { handleAuthClick(); return; }
+  const token = gapi.client.getToken()?.access_token;
+  if (!token) { showToast('Erro de token. Faça login novamente.'); return; }
+
+  // Configura a visualização para mostrar todos os arquivos
+  const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
+    .setMimeTypes('text/markdown,text/plain,application/octet-stream')
+    .setIncludeFolders(true);
+
+  const picker = new google.picker.PickerBuilder()
+    .addView(view)
+    .setOAuthToken(token)
+    .setDeveloperKey(API_KEY)
+    .setCallback(pickerCallback)
+    .setTitle('Selecione um Mapa Mental (.md ou .txt)')
+    .build();
+    
+  picker.setVisible(true);
+}
+
+function pickerCallback(data) {
+  if (data.action === google.picker.Action.PICKED) {
+    const file = data.docs[0];
+    // O Picker concede autorização `drive.file` para este arquivo automaticamente!
+    driveOpenFile({ id: file.id, name: file.name });
   }
 }
 
