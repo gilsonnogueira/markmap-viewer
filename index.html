@@ -1428,11 +1428,9 @@ async function driveSaveFile() {
 async function openDrivePanel() {
   document.getElementById('drive-panel').classList.add('open');
   document.getElementById('drive-overlay').classList.add('open');
-  const rootId = await ensureRootFolder();
-  currentFolderId = rootId;
-  folderStack = [{ id: 'root', name: 'Meu Drive' }, { id: rootId, name: 'Markmap Viewer' }];
+  if (!mmRootFolderId) await ensureRootFolder();
   driveUpdateBreadcrumb();
-  driveListFiles(rootId);
+  driveListFiles(currentFolderId);
 }
 
 function closeDrivePanel() {
