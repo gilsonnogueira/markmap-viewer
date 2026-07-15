@@ -1035,6 +1035,9 @@
     <button class="btn btn-primary" onclick="driveSaveFile()" style="flex:1; justify-content:center; gap:5px;" title="Salvar Mapa">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
     </button>
+    <button class="btn btn-icon" onclick="driveShareFile()" title="Copiar link de compartilhamento">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    </button>
     <button class="btn btn-primary" onclick="openDrivePicker()" style="flex:1; justify-content:center; gap:5px; background:var(--bg3); color:var(--text); border-color:var(--border);" title="Pesquisar em todo o Drive">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
@@ -1563,8 +1566,45 @@ async function loadSharedMap() {
     currentFileId = id;
     showToast('☁️ Mapa compartilhado carregado!');
     render();
+    // Modo Leitura: se não estiver logado com a conta dona, esconde o editor
+    if (!driveLoggedIn) activateReadMode();
   } catch(e) {
     showToast('Não foi possível carregar o mapa: ' + e.message);
+  }
+}
+
+// Modo Leitura: oculta editor, deixa só o mapa em tela cheia
+function activateReadMode() {
+  const editorPanel = document.getElementById('editor-panel');
+  const mapPanel    = document.getElementById('map-panel');
+  const header      = document.querySelector('header');
+  if (editorPanel) editorPanel.style.display = 'none';
+  if (header)      header.style.display      = 'none';
+  if (mapPanel)    { mapPanel.style.flex = '1'; mapPanel.style.width = '100%'; mapPanel.style.height = '100vh'; }
+  document.getElementById('main').style.height = '100vh';
+  // Badge de leitura no canto
+  const badge = document.createElement('div');
+  badge.style.cssText = 'position:fixed;top:10px;left:12px;z-index:999;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;backdrop-filter:blur(4px);pointer-events:none;';
+  badge.textContent = '👁 Visualização pública';
+  document.body.appendChild(badge);
+  document.title = 'Markmap — Visualização';
+}
+
+// Compartilhar arquivo atual: torna público e copia link
+async function driveShareFile() {
+  if (!driveLoggedIn) { showToast('Faça login para compartilhar.'); return; }
+  if (!currentFileId) { showToast('Salve o mapa antes de compartilhar.'); return; }
+  try {
+    // Garante que o arquivo está público para leitura
+    await gapi.client.drive.permissions.create({
+      fileId: currentFileId,
+      resource: { role: 'reader', type: 'anyone' },
+    });
+    const link = `${location.origin}${location.pathname}?id=${currentFileId}`;
+    await navigator.clipboard.writeText(link).catch(() => {});
+    showToast('🔗 Link copiado! Qualquer pessoa com ele pode visualizar.');
+  } catch(e) {
+    showToast('Erro ao compartilhar: ' + (e.result?.error?.message || e.message));
   }
 }
 
