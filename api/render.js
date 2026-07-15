@@ -29,11 +29,11 @@ module.exports = async (req, res) => {
   let title = 'Mapa Mental Interativo';
   let description = 'Visualize este mapa mental criado com Markmap Viewer.';
 
+  let globalErrorMsg = '';
+
   try {
     // Header artificial de referenciador para que o Google Cloud libere a chave restrita por domínio
     const reqHeaders = { 'Referer': 'https://markmap-viewer-eight.vercel.app/' };
-
-    let globalErrorMsg = '';
 
     // 1. Busca os metadados do arquivo (especialmente o nome) via Google Drive API v3
     const metaRes = await fetch(
