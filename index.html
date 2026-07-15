@@ -1452,56 +1452,64 @@ async function driveSaveFile() {
 
   try {
     if (currentFileId) {
-      // Atualizar existente
-      await gapi.client.request({
-        path: `/upload/drive/v3/files/${currentFileId}`,
+      // Atualizar existente via gapi (simples, sem metadados)
+      const token = gapi.client.getToken().access_token;
+      const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=media`, {
         method: 'PATCH',
-        params: { uploadType: 'media' },
-        headers: { 'Content-Type': 'text/plain' },
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'text/plain' },
         body: content,
       });
+      if (!res.ok) throw new Error((await res.json()).error?.message || res.statusText);
       showToast('☁️ Salvo no Drive!');
     } else {
       // Novo arquivo
       openDriveModal('Nome do arquivo', 'Meu Mapa', async (name) => {
         try {
           const targetParent = currentFolderId === 'home' ? await ensureRootFolder() : currentFolderId;
-          const boundary = '-------314159265358979323846';
-          const meta = JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [targetParent] });
-          const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: text/plain\r\n\r\n${content}\r\n--${boundary}--`;
-          
-          const res = await gapi.client.request({
-            path: '/upload/drive/v3/files',
+          const token = gapi.client.getToken().access_token;
+
+          // FormData garante multipart correto sem erros de string manual
+          const metadata = new Blob(
+            [JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [targetParent] })],
+            { type: 'application/json' }
+          );
+          const fileBlob = new Blob([content], { type: 'text/plain' });
+          const form = new FormData();
+          form.append('metadata', metadata);
+          form.append('file', fileBlob);
+
+          const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
             method: 'POST',
-            params: { uploadType: 'multipart' },
-            headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
-            body,
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: form,
           });
-          currentFileId = res.result.id;
-          
-          // Tornar público para leitura (ignora erro se a conta Google bloquear compartilhamento público)
+          if (!res.ok) throw new Error((await res.json()).error?.message || res.statusText);
+          const data = await res.json();
+          currentFileId = data.id;
+
+          // Tornar público para leitura (ignora erro se bloqueado pela conta)
           try {
             await gapi.client.drive.permissions.create({
               fileId: currentFileId,
               resource: { role: 'reader', type: 'anyone' },
             });
           } catch (permErr) {
-            console.warn('Não foi possível tornar o arquivo público automaticamente:', permErr);
+            console.warn('Arquivo salvo, mas não foi possível tornar público:', permErr);
           }
-          
+
           const link = `${location.origin}${location.pathname}?id=${currentFileId}`;
           showToast(`☁️ Salvo! Link copiado.`);
-          navigator.clipboard.writeText(link).catch(()=>{});
+          navigator.clipboard.writeText(link).catch(() => {});
           setTimeout(() => driveListFiles(currentFolderId), 1200);
         } catch (err) {
           console.error(err);
-          showToast("Erro ao salvar novo arquivo: " + (err.result?.error?.message || err.message));
+          showToast('Erro ao salvar: ' + (err.message || JSON.stringify(err)));
         }
       });
     }
   } catch(e) {
     console.error(e);
-    showToast("Erro ao salvar: " + (e.result?.error?.message || e.message));
+    showToast('Erro ao salvar: ' + (e.message || JSON.stringify(e)));
   }
 }
 
