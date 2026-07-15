@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markmap Viewer — TJCE</title>
+  <title>Markmap Viewer — Gilson Nogueira</title>
   <meta name="description" content="Visualizador e exportador de mapas mentais Markmap para estudo. Cole seu código, visualize e exporte em SVG, PNG ou HTML.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -503,9 +503,39 @@
     #markmap-svg foreignObject b { color: var(--accent) !important; }
     #markmap-svg .markmap-foreign a { color: var(--accent) !important; }
     
-    :root[data-theme="eink"] #markmap-svg .markmap-node circle,
-    :root[data-theme="eink"] #markmap-svg .markmap-node path,
-    :root[data-theme="eink"] #markmap-svg path.markmap-link { stroke: #000000 !important; }
+    /* E-INK: grayscale total — linhas, nós, textos e emojis */
+    :root[data-theme="eink"] #markmap-svg {
+      filter: grayscale(1) !important;
+    }
+    :root[data-theme="eink"] #markmap-svg .markmap-node circle {
+      stroke: #555 !important;
+      fill: #fff !important;
+    }
+    :root[data-theme="eink"] #markmap-svg path.markmap-link {
+      stroke: #555 !important;
+    }
+    :root[data-theme="eink"] #markmap-svg text {
+      fill: #000 !important;
+    }
+    :root[data-theme="eink"] #markmap-svg foreignObject strong,
+    :root[data-theme="eink"] #markmap-svg foreignObject b {
+      color: #000 !important;
+    }
+    :root[data-theme="eink"] #markmap-svg foreignObject mark {
+      background: rgba(0,0,0,0.08) !important;
+      border-color: #888 !important;
+      color: #000 !important;
+    }
+    :root[data-theme="eink"] * {
+      animation: none !important;
+      transition: none !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    :root[data-theme="eink"] .logo-orb {
+      background: #ddd !important;
+      box-shadow: none !important;
+    }
 
     /* Estilos para Callouts, Tabelas e Highlights injetados */
     #markmap-svg foreignObject mark {
@@ -563,7 +593,7 @@
   <div class="logo">
     <div class="logo-orb">🧠</div>
     <span class="logo-title">Markmap Viewer</span>
-    <span class="logo-badge">TJCE</span>
+    <span class="logo-badge">Gilson Nogueira</span>
   </div>
 
   <div class="header-right">
