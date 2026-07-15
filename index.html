@@ -1558,8 +1558,10 @@ function closeDriveModal() {
 async function confirmDriveModal() {
   const val = document.getElementById('drive-modal-input').value.trim();
   if (!val) return;
+  const cb = modalCallback;   // salva ANTES de closeDriveModal zerar
   closeDriveModal();
-  if (modalCallback) await modalCallback(val);
+  if (cb) await cb(val);
+
 }
 
 // Atualizar estado do botão após login
