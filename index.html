@@ -1178,6 +1178,7 @@ let currentFolderId = 'home';
 let folderStack     = [{ id: 'home', name: 'Início' }];
 let currentFileId   = null; // ID do arquivo .md aberto/salvo atualmente
 let modalCallback   = null; // função chamada ao confirmar o modal
+let settingsFileId  = null; // ID do arquivo .markmap-settings.json
 
 // Garante pasta raiz Markmap Viewer no Drive
 let mmRootFolderId = null;
@@ -1220,6 +1221,7 @@ function addDrivePinnedFolder(folder) {
   if (!folders.find(f => f.id === folder.id)) {
     folders.push(folder);
     localStorage.setItem('gdrive_pinned_folders', JSON.stringify(folders));
+    syncSettingsToDrive();
   }
 }
 function removeDrivePinnedFolder(id) {
@@ -1227,7 +1229,78 @@ function removeDrivePinnedFolder(id) {
   folders = folders.filter(f => f.id !== id);
   localStorage.setItem('gdrive_pinned_folders', JSON.stringify(folders));
   if (currentFolderId === 'home') driveListFiles('home');
+  syncSettingsToDrive();
 }
+
+// SINCRONIZAÇÃO NA NUVEM (.markmap-settings.json)
+async function syncSettingsToDrive() {
+  if (!driveLoggedIn || !mmRootFolderId) return;
+  try {
+    const settings = { pinned_folders: getDrivePinnedFolders() };
+    const content = JSON.stringify(settings);
+    const token = gapi.client.getToken().access_token;
+    
+    if (settingsFileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${settingsFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: content
+      });
+    } else {
+      const res = await gapi.client.drive.files.list({
+        q: `name='.markmap-settings.json' and trashed=false and '${mmRootFolderId}' in parents`,
+        fields: 'files(id)'
+      });
+      if (res.result.files && res.result.files.length > 0) {
+        settingsFileId = res.result.files[0].id;
+        await fetch(`https://www.googleapis.com/upload/drive/v3/files/${settingsFileId}?uploadType=media`, {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: content
+        });
+      } else {
+        const metadataForm = new Blob([JSON.stringify({ name: '.markmap-settings.json', mimeType: 'application/json', parents: [mmRootFolderId] })], { type: 'application/json' });
+        const contentForm = new Blob([content], { type: 'application/json' });
+        const form = new FormData();
+        form.append('metadata', metadataForm);
+        form.append('file', contentForm);
+        
+        const createRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: form
+        });
+        const created = await createRes.json();
+        settingsFileId = created.id;
+      }
+    }
+  } catch(e) { console.error("Erro ao sincronizar configurações:", e); }
+}
+
+async function loadSettingsFromDrive() {
+  if (!driveLoggedIn) return;
+  try {
+    await ensureRootFolder();
+    const res = await gapi.client.drive.files.list({
+      q: `name='.markmap-settings.json' and trashed=false and '${mmRootFolderId}' in parents`,
+      fields: 'files(id)'
+    });
+    if (res.result.files && res.result.files.length > 0) {
+      settingsFileId = res.result.files[0].id;
+      const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${settingsFileId}?alt=media`, {
+        headers: { 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }
+      });
+      if (fileRes.ok) {
+        const settings = await fileRes.json();
+        if (settings.pinned_folders) {
+          localStorage.setItem('gdrive_pinned_folders', JSON.stringify(settings.pinned_folders));
+          if (currentFolderId === 'home') driveListFiles('home');
+        }
+      }
+    }
+  } catch(e) { console.error("Erro ao carregar configurações do Drive:", e); }
+}
+
 
 // Listar arquivos e pastas
 async function driveListFiles(folderId) {
@@ -1469,7 +1542,8 @@ function onDriveLoggedIn() {
   btn.style.background = '#188038';
   btn.style.borderColor = '#188038';
   btn.onclick = openDrivePanel;
-  // Verificar se há ?id= na URL para carregar mapa compartilhado
+  // Sincroniza configurações e checa URL compartilhada
+  loadSettingsFromDrive();
   loadSharedMap();
 }
 
