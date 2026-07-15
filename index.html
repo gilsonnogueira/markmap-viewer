@@ -1446,6 +1446,7 @@ function driveNewFolder() {
 
 // Salvar arquivo atual no Drive
 async function driveSaveFile() {
+  showToast('🔍 driveSaveFile chamado. loggedIn=' + driveLoggedIn);
   if (!driveLoggedIn) { handleAuthClick(); return; }
   const content = document.getElementById('editor').value;
   if (!content.trim()) { showToast('Editor vazio.'); return; }
