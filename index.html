@@ -89,54 +89,105 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
-      height: 50px;
+      padding: 0 18px;
+      height: 52px;
       background: var(--bg2);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
       z-index: 20;
+      gap: 12px;
     }
 
     .logo {
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-shrink: 0;
     }
 
     .logo-orb {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary) 0%, #bc8cff 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      box-shadow: 0 0 14px rgba(88,166,255,.35);
+      box-shadow: 0 0 12px var(--accent-dim);
       flex-shrink: 0;
+      color: #fff;
     }
 
     .logo-title {
       font-size: 14px;
-      font-weight: 700;
-      letter-spacing: -.3px;
+      font-weight: 600;
+      letter-spacing: -.2px;
     }
 
-    .logo-badge {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-muted);
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      padding: 2px 7px;
-      border-radius: 20px;
-      letter-spacing: .3px;
+    .logo-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
     }
+
+    .logo-sub {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-muted);
+      letter-spacing: .1px;
+    }
+
+    .header-center { flex: 1; }
 
     .header-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* Theme toggle group */
+    .theme-group {
+      display: flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+    .theme-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      background: transparent;
+      border: none;
+      border-right: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .theme-btn:last-child { border-right: none; }
+    .theme-btn:hover { background: var(--bg3); color: var(--text); }
+    .theme-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    :root[data-theme="eink"] .theme-btn.active {
+      background: #000;
+      color: #fff;
+    }
+    .theme-btn svg { flex-shrink: 0; }
+
+    .hdr-sep {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      margin: 0 2px;
     }
 
     /* ═══════════════════════════════════════════════════════
@@ -164,22 +215,23 @@
       background: var(--border);
       border-color: var(--accent);
       color: var(--accent);
-      box-shadow: 0 0 14px var(--accent-dim);
     }
     .btn:active { transform: scale(.97); }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--primary-h));
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background: var(--primary-h);
       border-color: var(--primary-h);
       color: #fff;
     }
-    .btn-primary:hover {
-      background: linear-gradient(135deg, var(--primary-h), #58a6ff);
-      color: #fff;
-      box-shadow: 0 0 20px rgba(56,139,253,.4);
-    }
 
-    .btn-icon { padding: 5px 9px; font-size: 14px; }
+    .btn-icon { padding: 5px 8px; }
+    .btn-icon svg { display: block; }
 
     .btn-group { display: flex; gap: 3px; }
 
@@ -269,7 +321,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 7px 12px;
+      padding: 6px 12px;
       background: var(--bg2);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
@@ -278,13 +330,17 @@
     }
 
     .panel-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 11px;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: .5px;
+      letter-spacing: .6px;
       flex-shrink: 0;
     }
+    .panel-label svg { opacity: .6; }
 
     .panel-actions { display: flex; gap: 4px; align-items: center; }
 
@@ -591,42 +647,80 @@
 ═════════════════════════════════════════════════════════ -->
 <header>
   <div class="logo">
-    <div class="logo-orb">🧠</div>
-    <span class="logo-title">Markmap Viewer</span>
-    <span class="logo-badge">Gilson Nogueira</span>
+    <div class="logo-orb">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
+        <line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/>
+      </svg>
+    </div>
+    <span class="logo-title">Markmap</span>
+    <div class="logo-divider"></div>
+    <span class="logo-sub">Gilson Nogueira</span>
   </div>
 
+  <div class="header-center"></div>
+
   <div class="header-right">
-    <select id="theme-selector" onchange="setTheme(this.value)" style="background: var(--bg2); color: var(--text); border: 1px solid var(--border); padding: 4px 8px; border-radius: var(--r); font-size: 12px; outline: none; cursor: pointer;">
-      <option value="dark">🌑 Dark</option>
-      <option value="light">☀️ Claro</option>
-      <option value="eink">📖 E-ink</option>
-    </select>
-    <button class="btn" onclick="toggleEditor()" id="btn-toggle-editor" title="Ocultar Código">👁️ Editor</button>
+    <!-- Theme toggle group -->
+    <div class="theme-group" role="group" aria-label="Tema">
+      <button class="theme-btn active" id="tbtn-dark" onclick="setTheme('dark')" title="Modo Dark">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Dark
+      </button>
+      <button class="theme-btn" id="tbtn-light" onclick="setTheme('light')" title="Modo Claro">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        Claro
+      </button>
+      <button class="theme-btn" id="tbtn-eink" onclick="setTheme('eink')" title="Modo E-ink">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        E-ink
+      </button>
+    </div>
+
+    <div class="hdr-sep"></div>
+
+    <!-- Editor toggle -->
+    <button class="btn btn-icon" onclick="toggleEditor()" id="btn-toggle-editor" title="Mostrar/Ocultar editor">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+      </svg>
+    </button>
+
+    <div class="hdr-sep"></div>
+
+    <!-- Export dropdown -->
     <div class="export-wrap">
       <button class="btn" id="btn-export-toggle" onclick="toggleExportDrop()">
-        ⬇ Exportar <span style="font-size:10px; opacity:.7">▾</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="export-drop" id="export-drop">
         <div class="drop-item" onclick="exportSVG()">
-          <span class="di">🖼</span> SVG (vetorial)
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          SVG vetorial
         </div>
         <div class="drop-item" onclick="exportPNG()">
-          <span class="di">📷</span> PNG (imagem)
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          PNG imagem
         </div>
         <div class="drop-item" onclick="exportHTML()">
-          <span class="di">🌐</span> HTML standalone
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          HTML standalone
         </div>
         <div class="drop-sep"></div>
         <div class="drop-label">PDF</div>
         <div class="drop-item" onclick="exportPDF('normal')">
-          <span class="di">☀️</span> PDF — Normal
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+          PDF Claro
         </div>
         <div class="drop-item" onclick="exportPDF('dark')">
-          <span class="di">🌑</span> PDF — Dark
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          PDF Dark
         </div>
         <div class="drop-item" onclick="exportPDF('eink')">
-          <span class="di">📖</span> PDF — E-Ink (P&B)
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          PDF E-ink P&B
         </div>
       </div>
     </div>
@@ -641,11 +735,21 @@
   <!-- EDITOR -->
   <div class="panel editor-panel" id="editor-panel">
     <div class="panel-hdr">
-      <span class="panel-label">📝 Editor</span>
+      <span class="panel-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Editor
+      </span>
       <div class="panel-actions">
-        <button class="btn btn-icon" onclick="loadTemplate()" title="Carregar template TJCE">Template</button>
-        <button class="btn btn-icon" onclick="clearEditor()" title="Limpar">🗑</button>
-        <button class="btn btn-primary" id="btn-render" onclick="render()">▶ Renderizar</button>
+        <button class="btn btn-icon" onclick="loadTemplate()" title="Carregar template padrão">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+        </button>
+        <button class="btn btn-icon" onclick="clearEditor()" title="Limpar editor">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+        <button class="btn btn-primary" id="btn-render" onclick="render()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Renderizar
+        </button>
       </div>
     </div>
     <textarea
@@ -661,16 +765,29 @@
   <!-- MAP -->
   <div class="panel map-panel" id="map-panel">
     <div class="panel-hdr">
-      <span class="panel-label">🗺 Visualizador</span>
+      <span class="panel-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+        Visualizador
+      </span>
       <div class="panel-actions">
         <div class="btn-group">
-          <button class="btn btn-icon" onclick="zoomBy(1.3)"  title="Zoom In">＋</button>
-          <button class="btn btn-icon" onclick="zoomBy(0.77)" title="Zoom Out">－</button>
-          <button class="btn btn-icon" onclick="fitMap()"     title="Ajustar">⊕</button>
+          <button class="btn btn-icon" onclick="zoomBy(1.3)" title="Zoom In">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button class="btn btn-icon" onclick="zoomBy(0.77)" title="Zoom Out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button class="btn btn-icon" onclick="fitMap()" title="Ajustar ao tamanho">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
         </div>
         <div class="btn-group">
-          <button class="btn btn-icon" onclick="expandAll()"  title="Expandir tudo">▼ Exp</button>
-          <button class="btn btn-icon" onclick="collapseAll()" title="Recolher tudo">▶ Col</button>
+          <button class="btn btn-icon" onclick="expandAll()" title="Expandir tudo">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>
+          </button>
+          <button class="btn btn-icon" onclick="collapseAll()" title="Recolher tudo">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -739,6 +856,10 @@ function setTheme(theme) {
   } else {
     document.documentElement.setAttribute('data-theme', theme);
   }
+  // Sincroniza botões do toggle group
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  const active = document.getElementById('tbtn-' + theme);
+  if (active) active.classList.add('active');
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -882,12 +1003,10 @@ function preprocessMD(md) {
     // 4. Inline formatting (Highlights e Checkboxes)
     line = line.replace(/==(.*?)==/g, '<mark>$1</mark>');
     
-    // Checkboxes (Substituição Global + Unicode para ser à prova de falhas do DOMPurify e Markdown)
-    const checkedBox = `<span style="color: var(--accent); font-weight: bold; font-size: 1.1em; margin-right: 4px; vertical-align: middle;">☑</span>`;
-    const uncheckedBox = `<span style="color: var(--text-muted); font-size: 1.1em; margin-right: 4px; vertical-align: middle;">☐</span>`;
-    
-    line = line.replace(/\[[xX]\]/g, checkedBox);
-    line = line.replace(/\[\s+\]/g, uncheckedBox);
+    // Checkboxes: Unicode puro — sem HTML, sem DOMPurify, sem nós fantasma
+    line = line.replace(/\[[xX]\]/g, '☑');
+    line = line.replace(/\[\s+\]/g, '☐');
+    line = line.replace(/\[\]/g, '☐');
 
     out.push(line);
   }
