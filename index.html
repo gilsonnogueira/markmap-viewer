@@ -1546,9 +1546,8 @@ function onDriveLoggedIn() {
   btn.style.background = '#188038';
   btn.style.borderColor = '#188038';
   btn.onclick = openDrivePanel;
-  // Sincroniza configurações e checa URL compartilhada
+  // Sincroniza configurações
   loadSettingsFromDrive();
-  loadSharedMap();
 }
 
 // Carregar mapa compartilhado via URL ?id=FILE_ID (leitura pública via API_KEY)
@@ -2428,6 +2427,9 @@ function toast(msg, ms = 2800) {
 }
 
 function tick() { return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
+
+// Inicialização: checa se há mapa compartilhado na URL
+loadSharedMap();
 </script>
 
 </body>
