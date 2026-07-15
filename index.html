@@ -646,6 +646,133 @@
     }
 
     /* ═══════════════════════════════════════════════════════
+       DRIVE PANEL
+    ═══════════════════════════════════════════════════════ */
+    #drive-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 280px;
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+      box-shadow: -4px 0 20px rgba(0,0,0,.3);
+    }
+    #drive-panel.open { transform: translateX(0); }
+    .drive-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .drive-hdr-title {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 600; font-size: 13px;
+    }
+    .drive-breadcrumb {
+      display: flex; align-items: center; gap: 4px;
+      padding: 6px 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .drive-breadcrumb span {
+      cursor: pointer;
+      color: var(--accent);
+    }
+    .drive-breadcrumb span:hover { text-decoration: underline; }
+    .drive-breadcrumb .sep { color: var(--text-muted); cursor: default; }
+    .drive-actions {
+      display: flex; gap: 6px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .drive-file-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+    }
+    .drive-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      cursor: pointer;
+      border-radius: 0;
+      transition: background .15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .drive-item:hover { background: var(--bg3); }
+    .drive-item.active { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+    .drive-item svg { flex-shrink: 0; color: var(--accent); }
+    .drive-item.folder-item svg { color: #f9ab00; }
+    .drive-empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 32px 14px;
+    }
+    .drive-footer {
+      border-top: 1px solid var(--border);
+      padding: 8px 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    /* Modal de nome */
+    #drive-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #drive-modal-overlay.open { display: flex; }
+    #drive-modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px 24px;
+      width: 340px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    }
+    #drive-modal h3 { font-size: 14px; margin-bottom: 12px; font-weight: 600; }
+    #drive-modal input {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 8px 10px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    #drive-modal input:focus { border-color: var(--accent); }
+    #drive-modal .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    /* Overlay para fechar painel clicando fora */
+    #drive-overlay {
+      position: fixed; inset: 0;
+      z-index: 99;
+      display: none;
+    }
+    #drive-overlay.open { display: block; }
+
+    /* ═══════════════════════════════════════════════════════
        RESPONSIVE
     ═══════════════════════════════════════════════════════ */
     @media (max-width: 700px) {
@@ -862,6 +989,60 @@
 <div id="toast"></div>
 
 <!-- ══════════════════════════════════════════════════════
+     DRIVE PANEL
+═════════════════════════════════════════════════════════ -->
+<div id="drive-overlay" onclick="closeDrivePanel()"></div>
+
+<div id="drive-panel">
+  <div class="drive-hdr">
+    <div class="drive-hdr-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      Meu Drive
+    </div>
+    <button class="btn btn-icon" onclick="closeDrivePanel()" title="Fechar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="drive-breadcrumb" id="drive-breadcrumb">
+    <span>Meu Drive</span>
+  </div>
+
+  <div class="drive-actions">
+    <button class="btn btn-primary" onclick="driveSaveFile()" style="flex:1; justify-content:center; gap:5px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar mapa
+    </button>
+    <button class="btn btn-icon" onclick="driveNewFolder()" title="Nova pasta">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+    </button>
+    <button class="btn btn-icon" onclick="driveListFiles(currentFolderId)" title="Atualizar lista">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
+  </div>
+
+  <div class="drive-file-list" id="drive-file-list">
+    <div class="drive-empty">Conecte-se para ver seus arquivos.</div>
+  </div>
+
+  <div class="drive-footer" id="drive-footer">
+    Escopo: somente arquivos criados por este app
+  </div>
+</div>
+
+<!-- Modal genérico de nome -->
+<div id="drive-modal-overlay" onclick="if(event.target===this)closeDriveModal()">
+  <div id="drive-modal">
+    <h3 id="drive-modal-title">Nome</h3>
+    <input id="drive-modal-input" type="text" onkeydown="if(event.key==='Enter')confirmDriveModal()"/>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeDriveModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmDriveModal()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
      LIBS
 ═════════════════════════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -924,7 +1105,7 @@ function handleAuthClick() {
     }
     document.getElementById('btn-gdrive').style.display = 'none';
     showToast('Conectado ao Google Drive com sucesso!');
-    // Habilitar botões de salvar, listar arquivos, etc.
+    onDriveLoggedIn();
   };
 
   if (gapi.client.getToken() === null) {
@@ -936,6 +1117,245 @@ function handleAuthClick() {
 // -----------------------------------------------
 
 /* ─────────────────────────────────────────────────────────
+   DRIVE: Estado e Navegação
+───────────────────────────────────────────────────────── */
+let driveLoggedIn   = false;
+let currentFolderId = 'root';
+let folderStack     = [{ id: 'root', name: 'Meu Drive' }];
+let currentFileId   = null; // ID do arquivo .md aberto/salvo atualmente
+let modalCallback   = null; // função chamada ao confirmar o modal
+
+// Garante pasta raiz Markmap Viewer no Drive
+let mmRootFolderId = null;
+
+async function ensureRootFolder() {
+  if (mmRootFolderId) return mmRootFolderId;
+  // Verifica se já existe
+  const res = await gapi.client.drive.files.list({
+    q: "name='Markmap Viewer' and mimeType='application/vnd.google-apps.folder' and trashed=false and 'root' in parents",
+    fields: 'files(id,name)',
+  });
+  const files = res.result.files;
+  if (files && files.length > 0) {
+    mmRootFolderId = files[0].id;
+  } else {
+    const r = await gapi.client.drive.files.create({
+      resource: {
+        name: 'Markmap Viewer',
+        mimeType: 'application/vnd.google-apps.folder',
+      },
+      fields: 'id',
+    });
+    mmRootFolderId = r.result.id;
+  }
+  return mmRootFolderId;
+}
+
+// Listar arquivos e pastas
+async function driveListFiles(folderId) {
+  const list = document.getElementById('drive-file-list');
+  list.innerHTML = '<div class="drive-empty">Carregando…</div>';
+  try {
+    const res = await gapi.client.drive.files.list({
+      q: `'${folderId}' in parents and trashed=false`,
+      fields: 'files(id,name,mimeType)',
+      orderBy: 'folder,name',
+    });
+    const files = res.result.files || [];
+    if (files.length === 0) {
+      list.innerHTML = '<div class="drive-empty">Pasta vazia</div>';
+      return;
+    }
+    list.innerHTML = '';
+    files.forEach(f => {
+      const isFolder = f.mimeType === 'application/vnd.google-apps.folder';
+      const item = document.createElement('div');
+      item.className = 'drive-item' + (isFolder ? ' folder-item' : '');
+      item.innerHTML = isFolder
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span>${f.name}</span>`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${f.name}</span>`;
+      item.title = f.name;
+      item.onclick = () => {
+        if (isFolder) driveOpenFolder(f.id, f.name);
+        else driveOpenFile(f);
+      };
+      list.appendChild(item);
+    });
+  } catch(e) {
+    list.innerHTML = `<div class="drive-empty">Erro: ${e.result?.error?.message || e.message}</div>`;
+  }
+}
+
+function driveOpenFolder(id, name) {
+  currentFolderId = id;
+  folderStack.push({ id, name });
+  driveUpdateBreadcrumb();
+  driveListFiles(id);
+}
+
+function driveUpdateBreadcrumb() {
+  const bc = document.getElementById('drive-breadcrumb');
+  bc.innerHTML = folderStack.map((f, i) => {
+    if (i === folderStack.length - 1) return `<span style="color:var(--text);cursor:default;">${f.name}</span>`;
+    return `<span onclick="driveNavTo(${i})">${f.name}</span>`;
+  }).join(' <span class="sep">/</span> ');
+}
+
+function driveNavTo(index) {
+  folderStack = folderStack.slice(0, index + 1);
+  currentFolderId = folderStack[index].id;
+  driveUpdateBreadcrumb();
+  driveListFiles(currentFolderId);
+}
+
+// Abrir arquivo do Drive no editor
+async function driveOpenFile(f) {
+  try {
+    const res = await gapi.client.drive.files.get({
+      fileId: f.id,
+      alt: 'media',
+    });
+    document.getElementById('editor').value = res.body;
+    currentFileId = f.id;
+    showToast(`☁️ "${f.name}" carregado!`);
+    closeDrivePanel();
+    render();
+  } catch(e) {
+    showToast('Erro ao abrir arquivo.');
+  }
+}
+
+// Criar nova pasta
+function driveNewFolder() {
+  openDriveModal('Nome da nova pasta', 'Nova Pasta', async (name) => {
+    await gapi.client.drive.files.create({
+      resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: [currentFolderId] },
+      fields: 'id',
+    });
+    driveListFiles(currentFolderId);
+    showToast(`Pasta "${name}" criada!`);
+  });
+}
+
+// Salvar arquivo atual no Drive
+async function driveSaveFile() {
+  if (!driveLoggedIn) { handleAuthClick(); return; }
+  const content = document.getElementById('editor').value;
+  if (!content.trim()) { showToast('Editor vazio.'); return; }
+
+  if (currentFileId) {
+    // Atualizar existente
+    await gapi.client.request({
+      path: `/upload/drive/v3/files/${currentFileId}`,
+      method: 'PATCH',
+      params: { uploadType: 'media' },
+      headers: { 'Content-Type': 'text/plain' },
+      body: content,
+    });
+    showToast('☁️ Salvo no Drive!');
+  } else {
+    // Novo arquivo
+    openDriveModal('Nome do arquivo', 'Meu Mapa', async (name) => {
+      const rootId = await ensureRootFolder();
+      const boundary = '-------314159265358979323846';
+      const meta = JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [rootId] });
+      const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: text/plain\r\n\r\n${content}\r\n--${boundary}--`;
+      const res = await gapi.client.request({
+        path: '/upload/drive/v3/files',
+        method: 'POST',
+        params: { uploadType: 'multipart' },
+        headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
+        body,
+      });
+      currentFileId = res.result.id;
+      // Tornar público para leitura
+      await gapi.client.drive.permissions.create({
+        fileId: currentFileId,
+        resource: { role: 'reader', type: 'anyone' },
+      });
+      const link = `${location.origin}${location.pathname}?id=${currentFileId}`;
+      showToast(`☁️ Salvo! Link copiado.`);
+      navigator.clipboard.writeText(link).catch(()=>{});
+      driveListFiles(currentFolderId);
+    });
+  }
+}
+
+// Abrir painel do Drive
+async function openDrivePanel() {
+  document.getElementById('drive-panel').classList.add('open');
+  document.getElementById('drive-overlay').classList.add('open');
+  const rootId = await ensureRootFolder();
+  currentFolderId = rootId;
+  folderStack = [{ id: 'root', name: 'Meu Drive' }, { id: rootId, name: 'Markmap Viewer' }];
+  driveUpdateBreadcrumb();
+  driveListFiles(rootId);
+}
+
+function closeDrivePanel() {
+  document.getElementById('drive-panel').classList.remove('open');
+  document.getElementById('drive-overlay').classList.remove('open');
+}
+
+// Modal genérico de entrada de texto
+function openDriveModal(title, placeholder, callback) {
+  document.getElementById('drive-modal-title').textContent = title;
+  const inp = document.getElementById('drive-modal-input');
+  inp.value = placeholder;
+  inp.select();
+  modalCallback = callback;
+  document.getElementById('drive-modal-overlay').classList.add('open');
+  setTimeout(() => inp.focus(), 50);
+}
+
+function closeDriveModal() {
+  document.getElementById('drive-modal-overlay').classList.remove('open');
+  modalCallback = null;
+}
+
+async function confirmDriveModal() {
+  const val = document.getElementById('drive-modal-input').value.trim();
+  if (!val) return;
+  closeDriveModal();
+  if (modalCallback) await modalCallback(val);
+}
+
+// Atualizar estado do botão após login
+function onDriveLoggedIn() {
+  driveLoggedIn = true;
+  const btn = document.getElementById('btn-gdrive');
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Meu Drive`;
+  btn.style.background = '#188038';
+  btn.style.borderColor = '#188038';
+  btn.onclick = openDrivePanel;
+  // Verificar se há ?id= na URL para carregar mapa compartilhado
+  loadSharedMap();
+}
+
+// Carregar mapa compartilhado via URL ?id=FILE_ID (leitura pública via API_KEY)
+async function loadSharedMap() {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  if (!id) return;
+  try {
+    // Leitura pública (não precisa de login) usando API_KEY
+    const url = `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Arquivo não encontrado ou não público.');
+    const text = await res.text();
+    document.getElementById('editor').value = text;
+    currentFileId = id;
+    showToast('☁️ Mapa compartilhado carregado!');
+    render();
+  } catch(e) {
+    showToast('Não foi possível carregar o mapa: ' + e.message);
+  }
+}
+
+// Alias para compatibilidade interna
+function showToast(msg) { toast(msg); }
+
+
    STATE
 ───────────────────────────────────────────────────────── */
 let mm          = null;   // Markmap instance
