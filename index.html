@@ -1435,8 +1435,8 @@ function driveNewFolder() {
         resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: [targetParent] },
         fields: 'id',
       });
-      driveListFiles(currentFolderId);
       showToast(`Pasta "${name}" criada!`);
+      setTimeout(() => driveListFiles(currentFolderId), 1200);
     } catch(e) {
       console.error(e);
       showToast("Erro ao criar pasta: " + (e.result?.error?.message || e.message));
@@ -1492,7 +1492,7 @@ async function driveSaveFile() {
           const link = `${location.origin}${location.pathname}?id=${currentFileId}`;
           showToast(`☁️ Salvo! Link copiado.`);
           navigator.clipboard.writeText(link).catch(()=>{});
-          driveListFiles(currentFolderId);
+          setTimeout(() => driveListFiles(currentFolderId), 1200);
         } catch (err) {
           console.error(err);
           showToast("Erro ao salvar novo arquivo: " + (err.result?.error?.message || err.message));
