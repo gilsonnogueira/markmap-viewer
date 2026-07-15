@@ -1414,17 +1414,18 @@ function openDrivePicker() {
   const token = gapi.client.getToken()?.access_token;
   if (!token) { showToast('Erro de token. Faça login novamente.'); return; }
 
-  // Configura a visualização para mostrar todos os arquivos
+  // Configura a visualização para mostrar todos os arquivos e pastas
   const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setMimeTypes('text/markdown,text/plain,application/octet-stream')
-    .setIncludeFolders(true);
+    .setMimeTypes('text/markdown,text/plain,application/octet-stream,application/vnd.google-apps.folder')
+    .setIncludeFolders(true)
+    .setSelectFolderEnabled(true);
 
   const picker = new google.picker.PickerBuilder()
     .addView(view)
     .setOAuthToken(token)
     .setDeveloperKey(API_KEY)
     .setCallback(pickerCallback)
-    .setTitle('Selecione um Mapa Mental (.md ou .txt)')
+    .setTitle('Selecione um Mapa Mental ou uma Pasta Inteira')
     .build();
     
   picker.setVisible(true);
@@ -1433,8 +1434,16 @@ function openDrivePicker() {
 function pickerCallback(data) {
   if (data.action === google.picker.Action.PICKED) {
     const file = data.docs[0];
-    // O Picker concede autorização `drive.file` para este arquivo automaticamente!
-    driveOpenFile({ id: file.id, name: file.name });
+    if (file.mimeType === 'application/vnd.google-apps.folder') {
+      // Se selecionou uma pasta, limpa o histórico de navegação e pula direto pra ela
+      folderStack = [{ id: mmRootFolderId || 'root', name: 'Início' }, { id: file.id, name: file.name }];
+      currentFolderId = file.id;
+      driveUpdateBreadcrumb();
+      driveListFiles(currentFolderId);
+    } else {
+      // Se selecionou um arquivo, abre no editor
+      driveOpenFile({ id: file.id, name: file.name });
+    }
   }
 }
 
