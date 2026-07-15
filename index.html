@@ -1573,18 +1573,24 @@ async function loadSharedMap() {
   }
 }
 
-// Modo Leitura: oculta editor, deixa só o mapa em tela cheia
+// Modo Leitura: oculta editor, deixa só o mapa em tela cheia (mas mantém fontes e tema)
 function activateReadMode() {
   const editorPanel = document.getElementById('editor-panel');
   const mapPanel    = document.getElementById('map-panel');
-  const header      = document.querySelector('header');
+  const btnToggle   = document.getElementById('btn-toggle-editor');
+  const btnDrive    = document.getElementById('btn-gdrive');
+  const exportWrap  = document.querySelector('.export-wrap');
+  
   if (editorPanel) editorPanel.style.display = 'none';
-  if (header)      header.style.display      = 'none';
-  if (mapPanel)    { mapPanel.style.flex = '1'; mapPanel.style.width = '100%'; mapPanel.style.height = '100vh'; }
-  document.getElementById('main').style.height = '100vh';
+  if (btnToggle)   btnToggle.style.display   = 'none';
+  if (btnDrive)    btnDrive.style.display    = 'none';
+  if (exportWrap)  exportWrap.style.display  = 'none';
+  
+  if (mapPanel)    { mapPanel.style.flex = '1'; mapPanel.style.width = '100%'; }
+  
   // Badge de leitura no canto
   const badge = document.createElement('div');
-  badge.style.cssText = 'position:fixed;top:10px;left:12px;z-index:999;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;backdrop-filter:blur(4px);pointer-events:none;';
+  badge.style.cssText = 'position:fixed;bottom:15px;left:15px;z-index:999;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;backdrop-filter:blur(4px);pointer-events:none;';
   badge.textContent = '👁 Visualização pública';
   document.body.appendChild(badge);
   document.title = 'Markmap — Visualização';
