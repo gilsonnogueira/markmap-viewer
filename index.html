@@ -404,6 +404,10 @@
       position: relative;
       z-index: 1;
       display: none;
+      font-family: var(--map-font, var(--font)) !important;
+    }
+    #markmap-svg foreignObject {
+      font-family: var(--map-font, var(--font)) !important;
     }
     #markmap-svg.visible {
       display: block;
@@ -685,10 +689,13 @@
 
     <!-- Font selector -->
     <select id="font-selector" onchange="setFont(this.value)" class="btn" style="appearance: none; padding-right: 20px; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'6 9 12 15 18 9\'/></svg>'); background-repeat: no-repeat; background-position: right 6px center; outline: none; cursor: pointer;">
-      <option value="system-ui">Aa Padrão</option>
-      <option value="serif">Aa Serifada</option>
-      <option value="monospace">Aa Mono</option>
-      <option value="dyslexic">Aa Dislexia</option>
+      <option value="system">Fonte do Sistema</option>
+      <option value="sans">Arial / Sans</option>
+      <option value="serif">Times / Serif</option>
+      <option value="monospace">Courier / Mono</option>
+      <option value="tahoma">Tahoma</option>
+      <option value="verdana">Verdana</option>
+      <option value="dyslexic">Dislexia (Acessível)</option>
     </select>
   </div>
 
@@ -888,17 +895,23 @@ function setTheme(theme) {
 }
 
 function setFont(fontType) {
-  let fontFam = 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"';
+  let fontFam = 'var(--font)'; // fallback para a fonte do sistema/interface
   
-  if (fontType === 'serif') {
+  if (fontType === 'sans') {
+    fontFam = 'Arial, Helvetica, sans-serif';
+  } else if (fontType === 'serif') {
     fontFam = 'Georgia, "Times New Roman", serif';
   } else if (fontType === 'monospace') {
-    fontFam = 'Consolas, "Fira Code", monospace';
+    fontFam = 'Consolas, "Courier New", monospace';
+  } else if (fontType === 'tahoma') {
+    fontFam = 'Tahoma, Geneva, sans-serif';
+  } else if (fontType === 'verdana') {
+    fontFam = 'Verdana, Geneva, sans-serif';
   } else if (fontType === 'dyslexic') {
     fontFam = '"Comic Sans MS", "OpenDyslexic", cursive, sans-serif';
   }
   
-  document.documentElement.style.setProperty('--font', fontFam);
+  document.documentElement.style.setProperty('--map-font', fontFam);
 }
 
 /* ─────────────────────────────────────────────────────────
