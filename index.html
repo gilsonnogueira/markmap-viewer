@@ -1419,6 +1419,7 @@ async function driveOpenFile(f) {
     document.getElementById('editor').value = res.body;
     currentFileId = f.id;
     showToast(`☁️ "${f.name}" carregado!`);
+    updateEditorTitle(f.name);
     closeDrivePanel();
     render();
   } catch(e) {
@@ -1446,16 +1447,13 @@ function driveNewFolder() {
 
 // Salvar arquivo atual no Drive
 async function driveSaveFile() {
-  showToast('🔍 driveSaveFile chamado. loggedIn=' + driveLoggedIn);
   if (!driveLoggedIn) { handleAuthClick(); return; }
   const content = document.getElementById('editor').value;
   if (!content.trim()) { showToast('Editor vazio.'); return; }
 
-  showToast('⏳ [1/5] Iniciando salvamento...');
-
   try {
     if (currentFileId) {
-      showToast('⏳ [2/5] Atualizando arquivo existente...');
+      // Atualização (PATCH) do arquivo existente em nuvem usando fetch media upload
       const tokenObj = gapi.client.getToken();
       if (!tokenObj) throw new Error('Token de acesso ausente. Faça login novamente.');
       const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=media`, {
@@ -1466,18 +1464,16 @@ async function driveSaveFile() {
       if (!res.ok) throw new Error((await res.json()).error?.message || res.statusText);
       showToast('☁️ Salvo no Drive!');
     } else {
-      // Novo arquivo — abre modal para o nome
+      // Criação de um novo arquivo MD
       openDriveModal('Nome do arquivo', 'Meu Mapa', async (name) => {
         try {
-          showToast('⏳ [2/5] Verificando pasta destino...');
           const targetParent = currentFolderId === 'home' ? await ensureRootFolder() : currentFolderId;
           if (!targetParent) throw new Error('Não foi possível determinar a pasta de destino.');
 
-          showToast('⏳ [3/5] Obtendo token...');
           const tokenObj = gapi.client.getToken();
           if (!tokenObj) throw new Error('Token de acesso ausente. Faça login novamente.');
 
-          showToast('⏳ [4/5] Enviando arquivo para o Drive...');
+          // Montagem do FormData para upload multipart contendo metadados (JSON) e conteúdo (texto puro)
           const metadata = new Blob(
             [JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [targetParent] })],
             { type: 'application/json' }
@@ -1499,7 +1495,11 @@ async function driveSaveFile() {
           const data = await res.json();
           currentFileId = data.id;
 
-          showToast('⏳ [5/5] Configurando permissão pública...');
+          // Define título no painel do editor
+          updateEditorTitle(name + '.md');
+
+          // Habilita acesso de leitura pública no arquivo para fins de compartilhamento
+          // A falha nessa etapa é ignorada silenciosamente para suportar restrições corporativas/escolares da conta Drive
           try {
             await gapi.client.drive.permissions.create({
               fileId: currentFileId,
@@ -1576,13 +1576,28 @@ function onDriveLoggedIn() {
   loadSettingsFromDrive();
 }
 
-// Carregar mapa compartilhado via URL ?id=FILE_ID (leitura pública via API_KEY)
+/**
+ * Busca por parâmetro "?id=" na URL de carregamento. Se houver, busca o arquivo correspondente de forma pública via API_KEY
+ * (sem exigir login), atualiza o título do navegador com o Assunto (Nível 0) do mapa e entra no modo leitura para visitantes.
+ */
 async function loadSharedMap() {
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
   if (!id) return;
   try {
-    // Leitura pública (não precisa de login) usando API_KEY
+    // 1. Tenta obter o metadado (nome do arquivo) usando a API_KEY pública
+    let filename = 'Mapa Compartilhado';
+    try {
+      const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=name&key=${API_KEY}`);
+      if (metaRes.ok) {
+        const meta = await metaRes.json();
+        filename = meta.name;
+      }
+    } catch (metaErr) {
+      console.warn('Não foi possível obter os metadados do arquivo:', metaErr);
+    }
+
+    // 2. Faz download público direto (não precisa de token OAuth) do conteúdo do markdown (.md)
     const url = `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${API_KEY}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Arquivo não encontrado ou não público.');
@@ -1591,15 +1606,29 @@ async function loadSharedMap() {
     currentFileId = id;
     showToast('☁️ Mapa compartilhado carregado!');
     render();
-    // Modo Leitura: se não estiver logado com a conta dona, esconde o editor
-    if (!driveLoggedIn) activateReadMode();
+    
+    // 3. Define o título da aba baseado no primeiro Cabeçalho # do Markdown (Assunto Nível 0) ou no nome do arquivo
+    const subjectTitle = getLevelZeroTitle(text);
+    const finalTitle = subjectTitle || filename.replace('.md', '');
+    document.title = `Markmap — ${finalTitle}`;
+    updateEditorTitle(filename);
+
+    // 4. Modo Leitura: se o visitante não estiver logado com o Drive (dono), oculta os controles de escrita
+    if (!driveLoggedIn) {
+      activateReadMode(finalTitle);
+    }
   } catch(e) {
     showToast('Não foi possível carregar o mapa: ' + e.message);
   }
 }
 
-// Modo Leitura: oculta editor, deixa só o mapa em tela cheia (mas mantém fontes e tema)
-function activateReadMode() {
+/**
+ * Ativa o modo de leitura de forma irreversível nesta sessão.
+ * Esconde o painel do editor, botões de login, divisão física do resizer e menus de exportação.
+ * Adiciona um selo visual indicando visualização pública e altera o título da página.
+ * @param {string} title O título do assunto principal para exibição no navegador.
+ */
+function activateReadMode(title) {
   const editorPanel = document.getElementById('editor-panel');
   const mapPanel    = document.getElementById('map-panel');
   const btnToggle   = document.getElementById('btn-toggle-editor');
@@ -1613,20 +1642,23 @@ function activateReadMode() {
   
   if (mapPanel)    { mapPanel.style.flex = '1'; mapPanel.style.width = '100%'; }
   
-  // Badge de leitura no canto
+  // Cria o selo ("badge") flutuante no canto inferior esquerdo para indicar visualização pública
   const badge = document.createElement('div');
   badge.style.cssText = 'position:fixed;bottom:15px;left:15px;z-index:999;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;backdrop-filter:blur(4px);pointer-events:none;';
   badge.textContent = '👁 Visualização pública';
   document.body.appendChild(badge);
-  document.title = 'Markmap — Visualização';
+  document.title = `Markmap — ${title || 'Visualização'}`;
 }
 
-// Compartilhar arquivo atual: torna público e copia link
+/**
+ * Torna o mapa atual legível publicamente ("anyone with link") e gera a URL de compartilhamento.
+ * Copia o link resultante para a área de transferência do usuário.
+ */
 async function driveShareFile() {
   if (!driveLoggedIn) { showToast('Faça login para compartilhar.'); return; }
   if (!currentFileId) { showToast('Salve o mapa antes de compartilhar.'); return; }
   try {
-    // Garante que o arquivo está público para leitura
+    // Garante que o arquivo está marcado com permissão de leitura ('reader') para qualquer pessoa ('anyone')
     await gapi.client.drive.permissions.create({
       fileId: currentFileId,
       resource: { role: 'reader', type: 'anyone' },
@@ -2357,19 +2389,82 @@ function dl(blob, name) {
 }
 
 /* ─────────────────────────────────────────────────────────
-   EDITOR HELPERS
+   EDITOR: Funções de Auxílio (Template, Limpar e Novo Mapa)
 ───────────────────────────────────────────────────────── */
+
+/**
+ * Extrai o primeiro título de nível zero (#) do Markdown para usar como nome descritivo do mapa.
+ * Remove tags HTML, marcações de negrito e espaços adicionais.
+ * @param {string} md Conteúdo markdown do editor.
+ * @returns {string|null} Título do mapa mental ou null se não encontrado.
+ */
+function getLevelZeroTitle(md) {
+  const match = md.match(/^#\s+(.+)$/m);
+  if (match) {
+    return match[1].replace(/<[^>]*>/g, '').replace(/\*\*/g, '').trim();
+  }
+  return null;
+}
+
+/**
+ * Atualiza o título na barra superior do painel do editor para indicar o status do arquivo.
+ * @param {string|null} filename O nome do arquivo Markdown salvo no Drive ou null se for novo.
+ */
+function updateEditorTitle(filename) {
+  const titleEl = document.getElementById('editor-title');
+  if (!titleEl) return;
+  if (filename) {
+    titleEl.textContent = `Editor — ${filename}`;
+  } else {
+    titleEl.textContent = 'Editor (Novo Mapa)';
+  }
+}
+
+/**
+ * Inicia uma nova sessão de mapa mental limpa.
+ * Reseta o ID do arquivo atual para impedir que salvamentos futuros sobrescrevam o mapa anterior.
+ * Pede confirmação se houver código não salvo digitado no editor.
+ */
+function newMap() {
+  const ed = document.getElementById('editor');
+  if (ed.value.trim()) {
+    if (!confirm('Iniciar um novo mapa? O mapa atual será fechado no editor.')) return;
+  }
+  ed.value = '';
+  currentFileId = null; // Zera o ID de arquivo para forçar criação de novo arquivo ao salvar
+  updateEditorTitle(null);
+  render();
+  ed.focus();
+  showToast('📄 Novo mapa iniciado (pronto para salvar).');
+}
+
+/**
+ * Carrega a estrutura padrão e recomendada de mapa mental para o TJCE no editor.
+ * Pede confirmação prévia se já existir código no editor.
+ */
 function loadTemplate() {
   const ed = document.getElementById('editor');
   if (ed.value && !confirm('Substituir conteúdo pelo template TJCE?')) return;
   ed.value = TEMPLATE;
+  currentFileId = null; // Reseta ID do arquivo para tratar o template carregado como novo arquivo
+  updateEditorTitle(null);
+  render();
   ed.focus();
 }
 
+/**
+ * Limpa toda a área de texto do editor e reseta o ID do arquivo atual em memória.
+ */
 function clearEditor() {
   const ed = document.getElementById('editor');
   if (!ed.value) return;
-  if (confirm('Limpar editor?')) { ed.value = ''; ed.focus(); }
+  if (confirm('Limpar editor?')) {
+    ed.value = '';
+    currentFileId = null; // Reseta o ID de arquivo para segurança
+    updateEditorTitle(null);
+    render();
+    ed.focus();
+  }
 }
 
 /* ─────────────────────────────────────────────────────────
