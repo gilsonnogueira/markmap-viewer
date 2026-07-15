@@ -1450,25 +1450,33 @@ async function driveSaveFile() {
   const content = document.getElementById('editor').value;
   if (!content.trim()) { showToast('Editor vazio.'); return; }
 
+  showToast('⏳ [1/5] Iniciando salvamento...');
+
   try {
     if (currentFileId) {
-      // Atualizar existente via gapi (simples, sem metadados)
-      const token = gapi.client.getToken().access_token;
+      showToast('⏳ [2/5] Atualizando arquivo existente...');
+      const tokenObj = gapi.client.getToken();
+      if (!tokenObj) throw new Error('Token de acesso ausente. Faça login novamente.');
       const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=media`, {
         method: 'PATCH',
-        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'text/plain' },
+        headers: { 'Authorization': 'Bearer ' + tokenObj.access_token, 'Content-Type': 'text/plain' },
         body: content,
       });
       if (!res.ok) throw new Error((await res.json()).error?.message || res.statusText);
       showToast('☁️ Salvo no Drive!');
     } else {
-      // Novo arquivo
+      // Novo arquivo — abre modal para o nome
       openDriveModal('Nome do arquivo', 'Meu Mapa', async (name) => {
         try {
+          showToast('⏳ [2/5] Verificando pasta destino...');
           const targetParent = currentFolderId === 'home' ? await ensureRootFolder() : currentFolderId;
-          const token = gapi.client.getToken().access_token;
+          if (!targetParent) throw new Error('Não foi possível determinar a pasta de destino.');
 
-          // FormData garante multipart correto sem erros de string manual
+          showToast('⏳ [3/5] Obtendo token...');
+          const tokenObj = gapi.client.getToken();
+          if (!tokenObj) throw new Error('Token de acesso ausente. Faça login novamente.');
+
+          showToast('⏳ [4/5] Enviando arquivo para o Drive...');
           const metadata = new Blob(
             [JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [targetParent] })],
             { type: 'application/json' }
@@ -1480,14 +1488,17 @@ async function driveSaveFile() {
 
           const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: { 'Authorization': 'Bearer ' + tokenObj.access_token },
             body: form,
           });
-          if (!res.ok) throw new Error((await res.json()).error?.message || res.statusText);
+          if (!res.ok) {
+            const errBody = await res.json();
+            throw new Error(errBody.error?.message || res.statusText);
+          }
           const data = await res.json();
           currentFileId = data.id;
 
-          // Tornar público para leitura (ignora erro se bloqueado pela conta)
+          showToast('⏳ [5/5] Configurando permissão pública...');
           try {
             await gapi.client.drive.permissions.create({
               fileId: currentFileId,
@@ -1503,13 +1514,13 @@ async function driveSaveFile() {
           setTimeout(() => driveListFiles(currentFolderId), 1200);
         } catch (err) {
           console.error(err);
-          showToast('Erro ao salvar: ' + (err.message || JSON.stringify(err)));
+          showToast('❌ Erro: ' + (err.message || JSON.stringify(err)), 6000);
         }
       });
     }
   } catch(e) {
     console.error(e);
-    showToast('Erro ao salvar: ' + (e.message || JSON.stringify(e)));
+    showToast('❌ Erro: ' + (e.message || JSON.stringify(e)), 6000);
   }
 }
 
@@ -1669,7 +1680,7 @@ function pickerCallback(data) {
 }
 
 // Alias para compatibilidade interna
-function showToast(msg) { toast(msg); }
+function showToast(msg, ms) { toast(msg, ms); }
 
 
 /* ─────────────────────────────────────────────────────────
