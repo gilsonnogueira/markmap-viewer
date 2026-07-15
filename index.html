@@ -704,20 +704,43 @@
     .drive-item {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
       padding: 7px 14px;
       font-size: 12.5px;
       cursor: pointer;
       border-radius: 0;
       transition: background .15s;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     .drive-item:hover { background: var(--bg3); }
     .drive-item.active { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+    .drive-item-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .drive-item-content span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .drive-item svg { flex-shrink: 0; color: var(--accent); }
     .drive-item.folder-item svg { color: #f9ab00; }
+    .drive-item-remove {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      opacity: 0;
+    }
+    .drive-item:hover .drive-item-remove { opacity: 1; }
+    .drive-item-remove:hover { color: #ea4335; background: rgba(234,67,53,0.1); }
     .drive-empty {
       text-align: center;
       color: var(--text-muted);
@@ -1151,8 +1174,8 @@ window.addEventListener('load', () => {
    DRIVE: Estado e Navegação
 ───────────────────────────────────────────────────────── */
 let driveLoggedIn   = false;
-let currentFolderId = 'root';
-let folderStack     = [{ id: 'root', name: 'Meu Drive' }];
+let currentFolderId = 'home';
+let folderStack     = [{ id: 'home', name: 'Início' }];
 let currentFileId   = null; // ID do arquivo .md aberto/salvo atualmente
 let modalCallback   = null; // função chamada ao confirmar o modal
 
@@ -1187,10 +1210,51 @@ async function ensureRootFolder() {
   }
 }
 
+// Memória das pastas fixadas (LocalStorage)
+function getDrivePinnedFolders() {
+  try { return JSON.parse(localStorage.getItem('gdrive_pinned_folders')) || []; }
+  catch(e) { return []; }
+}
+function addDrivePinnedFolder(folder) {
+  const folders = getDrivePinnedFolders();
+  if (!folders.find(f => f.id === folder.id)) {
+    folders.push(folder);
+    localStorage.setItem('gdrive_pinned_folders', JSON.stringify(folders));
+  }
+}
+function removeDrivePinnedFolder(id) {
+  let folders = getDrivePinnedFolders();
+  folders = folders.filter(f => f.id !== id);
+  localStorage.setItem('gdrive_pinned_folders', JSON.stringify(folders));
+  if (currentFolderId === 'home') driveListFiles('home');
+}
+
 // Listar arquivos e pastas
 async function driveListFiles(folderId) {
   const list = document.getElementById('drive-file-list');
   list.innerHTML = '<div class="drive-empty">Carregando…</div>';
+  
+  if (folderId === 'home') {
+    // TELA INICIAL VIRTUAL (HOME)
+    try {
+      await ensureRootFolder(); // Garante que a pasta padrão exista
+      const pinned = getDrivePinnedFolders();
+      list.innerHTML = '';
+      
+      // Renderizar pasta raiz padrão
+      list.appendChild(createDriveFolderItem({ id: mmRootFolderId, name: 'Markmap Viewer (Padrão)' }, false));
+      
+      // Renderizar pastas fixadas
+      pinned.forEach(f => {
+        list.appendChild(createDriveFolderItem(f, true));
+      });
+    } catch(e) {
+      list.innerHTML = `<div class="drive-empty">Erro ao carregar início.</div>`;
+    }
+    return;
+  }
+
+  // NAVEGAÇÃO NORMAL DE PASTA
   try {
     const res = await gapi.client.drive.files.list({
       q: `'${folderId}' in parents and trashed=false`,
@@ -1207,19 +1271,44 @@ async function driveListFiles(folderId) {
       const isFolder = f.mimeType === 'application/vnd.google-apps.folder';
       const item = document.createElement('div');
       item.className = 'drive-item' + (isFolder ? ' folder-item' : '');
-      item.innerHTML = isFolder
-        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span>${f.name}</span>`
-        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${f.name}</span>`;
-      item.title = f.name;
       item.onclick = () => {
         if (isFolder) driveOpenFolder(f.id, f.name);
         else driveOpenFile(f);
       };
+      
+      const icon = isFolder
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+      
+      item.innerHTML = `<div class="drive-item-content">${icon} <span>${f.name}</span></div>`;
+      item.title = f.name;
       list.appendChild(item);
     });
   } catch(e) {
     list.innerHTML = `<div class="drive-empty">Erro: ${e.result?.error?.message || e.message}</div>`;
   }
+}
+
+// Criação de item visual de pasta
+function createDriveFolderItem(folder, isPinned) {
+  const item = document.createElement('div');
+  item.className = 'drive-item folder-item';
+  item.onclick = () => driveOpenFolder(folder.id, folder.name);
+  item.title = folder.name;
+  
+  const icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+  
+  if (isPinned) {
+    item.innerHTML = `
+      <div class="drive-item-content">${icon} <span>${folder.name}</span></div>
+      <button class="drive-item-remove" title="Desafixar" onclick="event.stopPropagation(); removeDrivePinnedFolder('${folder.id}')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    `;
+  } else {
+    item.innerHTML = `<div class="drive-item-content">${icon} <span>${folder.name}</span></div>`;
+  }
+  return item;
 }
 
 function driveOpenFolder(id, name) {
@@ -1435,11 +1524,13 @@ function pickerCallback(data) {
   if (data.action === google.picker.Action.PICKED) {
     const file = data.docs[0];
     if (file.mimeType === 'application/vnd.google-apps.folder') {
-      // Se selecionou uma pasta, limpa o histórico de navegação e pula direto pra ela
-      folderStack = [{ id: mmRootFolderId || 'root', name: 'Início' }, { id: file.id, name: file.name }];
-      currentFolderId = file.id;
+      // Se selecionou uma pasta, fixa na página Início e navega para Início
+      addDrivePinnedFolder({ id: file.id, name: file.name });
+      folderStack = [{ id: 'home', name: 'Início' }];
+      currentFolderId = 'home';
       driveUpdateBreadcrumb();
-      driveListFiles(currentFolderId);
+      driveListFiles('home');
+      showToast('Pasta adicionada ao Início!');
     } else {
       // Se selecionou um arquivo, abre no editor
       driveOpenFile({ id: file.id, name: file.name });
