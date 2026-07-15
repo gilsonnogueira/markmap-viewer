@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-// Chave de API pública do Google — só funciona para arquivos com permissão "anyone with link"
-const API_KEY = 'AIzaSyChGZoL47knD9Hv4MERgKltP2G0GMr9Kyg';
+// Chave de API carregada de variável de ambiente da Vercel (não exposta no código-fonte)
+// Configure em: Vercel Dashboard → Project → Settings → Environment Variables → GOOGLE_API_KEY
+const API_KEY = process.env.GOOGLE_API_KEY;
 
 /**
  * Serverless Function Vercel.
