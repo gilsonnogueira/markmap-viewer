@@ -510,15 +510,15 @@
     /* Estilos para Callouts, Tabelas e Highlights injetados */
     #markmap-svg foreignObject mark {
       background: rgba(227, 179, 65, 0.25) !important;
-      color: #e3b341 !important;
-      border: 1px solid rgba(227, 179, 65, 0.4);
+      color: inherit !important;
+      border: 1px solid rgba(227, 179, 65, 0.5);
       padding: 0 4px;
       border-radius: 4px;
       font-weight: 600;
     }
     .mm-callout {
-      border-left: 4px solid #58a6ff;
-      background: rgba(255, 255, 255, 0.05);
+      border-left: 4px solid var(--accent);
+      background: color-mix(in srgb, var(--text) 6%, transparent);
       padding: 8px 12px;
       border-radius: 4px;
       margin: 6px 0;
