@@ -1064,7 +1064,7 @@ const CLIENT_ID = '38923427473-0v6ieeda7agrnlqcf029291rerj6pb8s.apps.googleuserc
 const API_KEY = 'AIzaSyChGZoL47knD9Hv4MERgKltP2G0GMr9Kyg';
 
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive';
 
 let tokenClient;
 let gapiInited = false;
@@ -1161,25 +1161,30 @@ let mmRootFolderId = null;
 
 async function ensureRootFolder() {
   if (mmRootFolderId) return mmRootFolderId;
-  // Verifica se já existe
-  const res = await gapi.client.drive.files.list({
-    q: "name='Markmap Viewer' and mimeType='application/vnd.google-apps.folder' and trashed=false and 'root' in parents",
-    fields: 'files(id,name)',
-  });
-  const files = res.result.files;
-  if (files && files.length > 0) {
-    mmRootFolderId = files[0].id;
-  } else {
-    const r = await gapi.client.drive.files.create({
-      resource: {
-        name: 'Markmap Viewer',
-        mimeType: 'application/vnd.google-apps.folder',
-      },
-      fields: 'id',
+  try {
+    const res = await gapi.client.drive.files.list({
+      q: "name='Markmap Viewer' and mimeType='application/vnd.google-apps.folder' and trashed=false and 'root' in parents",
+      fields: 'files(id,name)',
     });
-    mmRootFolderId = r.result.id;
+    const files = res.result.files;
+    if (files && files.length > 0) {
+      mmRootFolderId = files[0].id;
+    } else {
+      const r = await gapi.client.drive.files.create({
+        resource: {
+          name: 'Markmap Viewer',
+          mimeType: 'application/vnd.google-apps.folder',
+        },
+        fields: 'id',
+      });
+      mmRootFolderId = r.result.id;
+    }
+    return mmRootFolderId;
+  } catch (e) {
+    console.error("Erro ao garantir pasta raiz:", e);
+    showToast("Erro ao criar/verificar pasta raiz do Drive.");
+    throw e;
   }
-  return mmRootFolderId;
 }
 
 // Listar arquivos e pastas
@@ -1259,12 +1264,17 @@ async function driveOpenFile(f) {
 // Criar nova pasta
 function driveNewFolder() {
   openDriveModal('Nome da nova pasta', 'Nova Pasta', async (name) => {
-    await gapi.client.drive.files.create({
-      resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: [currentFolderId] },
-      fields: 'id',
-    });
-    driveListFiles(currentFolderId);
-    showToast(`Pasta "${name}" criada!`);
+    try {
+      await gapi.client.drive.files.create({
+        resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: [currentFolderId] },
+        fields: 'id',
+      });
+      driveListFiles(currentFolderId);
+      showToast(`Pasta "${name}" criada!`);
+    } catch(e) {
+      console.error(e);
+      showToast("Erro ao criar pasta: " + (e.result?.error?.message || e.message));
+    }
   });
 }
 
@@ -1274,41 +1284,54 @@ async function driveSaveFile() {
   const content = document.getElementById('editor').value;
   if (!content.trim()) { showToast('Editor vazio.'); return; }
 
-  if (currentFileId) {
-    // Atualizar existente
-    await gapi.client.request({
-      path: `/upload/drive/v3/files/${currentFileId}`,
-      method: 'PATCH',
-      params: { uploadType: 'media' },
-      headers: { 'Content-Type': 'text/plain' },
-      body: content,
-    });
-    showToast('☁️ Salvo no Drive!');
-  } else {
-    // Novo arquivo
-    openDriveModal('Nome do arquivo', 'Meu Mapa', async (name) => {
-      const rootId = await ensureRootFolder();
-      const boundary = '-------314159265358979323846';
-      const meta = JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [rootId] });
-      const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: text/plain\r\n\r\n${content}\r\n--${boundary}--`;
-      const res = await gapi.client.request({
-        path: '/upload/drive/v3/files',
-        method: 'POST',
-        params: { uploadType: 'multipart' },
-        headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
-        body,
+  try {
+    if (currentFileId) {
+      // Atualizar existente
+      await gapi.client.request({
+        path: `/upload/drive/v3/files/${currentFileId}`,
+        method: 'PATCH',
+        params: { uploadType: 'media' },
+        headers: { 'Content-Type': 'text/plain' },
+        body: content,
       });
-      currentFileId = res.result.id;
-      // Tornar público para leitura
-      await gapi.client.drive.permissions.create({
-        fileId: currentFileId,
-        resource: { role: 'reader', type: 'anyone' },
+      showToast('☁️ Salvo no Drive!');
+    } else {
+      // Novo arquivo
+      openDriveModal('Nome do arquivo', 'Meu Mapa', async (name) => {
+        try {
+          const rootId = await ensureRootFolder();
+          const boundary = '-------314159265358979323846';
+          const meta = JSON.stringify({ name: name + '.md', mimeType: 'text/markdown', parents: [rootId] });
+          const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: text/plain\r\n\r\n${content}\r\n--${boundary}--`;
+          
+          const res = await gapi.client.request({
+            path: '/upload/drive/v3/files',
+            method: 'POST',
+            params: { uploadType: 'multipart' },
+            headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
+            body,
+          });
+          currentFileId = res.result.id;
+          
+          // Tornar público para leitura
+          await gapi.client.drive.permissions.create({
+            fileId: currentFileId,
+            resource: { role: 'reader', type: 'anyone' },
+          });
+          
+          const link = `${location.origin}${location.pathname}?id=${currentFileId}`;
+          showToast(`☁️ Salvo! Link copiado.`);
+          navigator.clipboard.writeText(link).catch(()=>{});
+          driveListFiles(currentFolderId);
+        } catch (err) {
+          console.error(err);
+          showToast("Erro ao salvar novo arquivo: " + (err.result?.error?.message || err.message));
+        }
       });
-      const link = `${location.origin}${location.pathname}?id=${currentFileId}`;
-      showToast(`☁️ Salvo! Link copiado.`);
-      navigator.clipboard.writeText(link).catch(()=>{});
-      driveListFiles(currentFolderId);
-    });
+    }
+  } catch(e) {
+    console.error(e);
+    showToast("Erro ao salvar: " + (e.result?.error?.message || e.message));
   }
 }
 
