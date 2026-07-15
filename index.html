@@ -1155,7 +1155,7 @@ function handleAuthClick() {
     onDriveLoggedIn();
   };
   if (gapi.client.getToken() === null) {
-    tokenClient.requestAccessToken({prompt: 'consent'});
+    tokenClient.requestAccessToken({prompt: ''});
   } else {
     tokenClient.requestAccessToken({prompt: ''});
   }
