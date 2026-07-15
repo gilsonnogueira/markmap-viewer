@@ -30,10 +30,13 @@ module.exports = async (req, res) => {
   let description = 'Visualize este mapa mental criado com Markmap Viewer.';
 
   try {
-    // 1. Tenta buscar o nome do arquivo no Drive (requer que o arquivo seja público)
+    // Header artificial de referenciador para que o Google Cloud libere a chave restrita por domínio
+    const reqHeaders = { 'Referer': 'https://markmap-viewer-eight.vercel.app/' };
+
+    // 1. Busca os metadados do arquivo (especialmente o nome) via Google Drive API v3
     const metaRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${id}?fields=name&key=${API_KEY}`,
-      { headers: { Accept: 'application/json' } }
+      { headers: { ...reqHeaders, Accept: 'application/json' } }
     );
 
     if (metaRes.ok) {
@@ -47,7 +50,8 @@ module.exports = async (req, res) => {
 
     // 2. Tenta baixar o conteúdo .md para extrair o Nível 0 (#)
     const contentRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${API_KEY}`
+      `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${API_KEY}`,
+      { headers: reqHeaders }
     );
 
     if (contentRes.ok) {
