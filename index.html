@@ -1479,11 +1479,15 @@ async function driveSaveFile() {
           });
           currentFileId = res.result.id;
           
-          // Tornar público para leitura
-          await gapi.client.drive.permissions.create({
-            fileId: currentFileId,
-            resource: { role: 'reader', type: 'anyone' },
-          });
+          // Tornar público para leitura (ignora erro se a conta Google bloquear compartilhamento público)
+          try {
+            await gapi.client.drive.permissions.create({
+              fileId: currentFileId,
+              resource: { role: 'reader', type: 'anyone' },
+            });
+          } catch (permErr) {
+            console.warn('Não foi possível tornar o arquivo público automaticamente:', permErr);
+          }
           
           const link = `${location.origin}${location.pathname}?id=${currentFileId}`;
           showToast(`☁️ Salvo! Link copiado.`);
