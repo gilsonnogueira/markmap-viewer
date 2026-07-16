@@ -9,15 +9,31 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Faltam variaveis de ambiente GOOGLE_SERVICE_ACCOUNT ou GALLERY_FOLDER_ID' });
     }
 
-    let credentials;
+    let client_email, private_key;
     try {
-      credentials = JSON.parse(serviceAccountJson);
+      // Tenta parse normal
+      let parsed = JSON.parse(serviceAccountJson);
+      // Se Vercel adicionou aspas extras ou escapou o JSON duas vezes
+      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+      client_email = parsed.client_email;
+      private_key = parsed.private_key;
     } catch (e) {
-      return res.status(500).json({ error: 'GOOGLE_SERVICE_ACCOUNT nao e um JSON valido' });
+      // Fallback: Regex para pegar os campos ignorando quebra do JSON
+      const emailMatch = serviceAccountJson.match(/"client_email"\s*:\s*"([^"]+)"/);
+      const keyMatch = serviceAccountJson.match(/"private_key"\s*:\s*"([^"]+)"/);
+      if (emailMatch && keyMatch) {
+         client_email = emailMatch[1];
+         private_key = keyMatch[1];
+      } else {
+         return res.status(500).json({ error: 'Falha ao processar GOOGLE_SERVICE_ACCOUNT' });
+      }
     }
 
+    // Corrige quebras de linha na chave privada (Vercel costuma escapar para \\n literal)
+    private_key = private_key.replace(/\\n/g, '\n');
+
     const auth = new google.auth.GoogleAuth({
-      credentials,
+      credentials: { client_email, private_key },
       scopes: ['https://www.googleapis.com/auth/drive.readonly'],
     });
 
