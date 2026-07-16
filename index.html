@@ -991,7 +991,14 @@
 
   <!-- GALLERY -->
   <div class="panel gallery-panel" id="gallery-panel">
-    <h2 class="gallery-title">Mapas Mentais TJCE</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <h2 class="gallery-title" style="margin-bottom: 0;">Mapas Mentais TJCE</h2>
+      <select id="gallery-sort" class="btn" style="background: var(--bg); color: var(--text); border: 1px solid var(--border);" onchange="loadGallery()">
+        <option value="name">Nome (A-Z)</option>
+        <option value="date_desc">Mais Recentes</option>
+        <option value="date_asc">Mais Antigos</option>
+      </select>
+    </div>
     <div class="gallery-grid" id="gallery-grid">
       <div style="text-align:center; grid-column: 1 / -1; color: var(--text-subtle);">Carregando mapas da nuvem...</div>
     </div>
@@ -1029,12 +1036,6 @@
 
   <!-- MAP -->
   <div class="panel map-panel" id="map-panel">
-    <div class="panel-hdr">
-      <span class="panel-label">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-        Visualizador
-      </span>
-    </div>
     <div class="map-container" id="map-container">
       <svg id="markmap-svg"></svg>
       
@@ -1928,6 +1929,16 @@ async function loadGallery() {
     const folders = allFiles.filter(isFolder);
     const files = allFiles.filter(f => !isFolder(f));
     
+    const sortVal = document.getElementById('gallery-sort') ? document.getElementById('gallery-sort').value : 'name';
+    if (sortVal === 'name') {
+      files.sort((a, b) => a.name.localeCompare(b.name));
+      folders.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortVal === 'date_desc') {
+      files.sort((a, b) => new Date(b.modifiedTime) - new Date(a.modifiedTime));
+    } else if (sortVal === 'date_asc') {
+      files.sort((a, b) => new Date(a.modifiedTime) - new Date(b.modifiedTime));
+    }
+    
     // Encontrar raízes (itens cujo pai não está na nossa lista de pastas)
     const folderIds = new Set(folders.map(f => f.id));
     
@@ -2016,6 +2027,10 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('editor-panel').style.display = 'none';
     const gp = document.getElementById('gallery-panel');
     if (gp) gp.style.display = 'none';
+    const backBtn = document.getElementById('btn-back-gallery');
+    if (backBtn) backBtn.style.display = 'inline-flex';
+    const backDiv = document.getElementById('btn-back-divider');
+    if (backDiv) backDiv.style.display = 'block';
   }
 
   try {
