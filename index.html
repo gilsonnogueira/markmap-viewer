@@ -1842,6 +1842,9 @@ window.addEventListener('DOMContentLoaded', () => {
    PREPROCESSOR (Tabelas, Callouts e Limpeza)
 ───────────────────────────────────────────────────────── */
 function preprocessMD(md) {
+  // Corrige erro de digitação comum do Obsidian onde checkboxes ficam com duplo traço (- - [ ])
+  md = md.replace(/^(\s*)-\s+-\s+\[/gm, '$1- [');
+
   // 1. Remove marcadores markdown globais
   md = md.replace(/^```[a-z]*\n/gi, '').replace(/\n```$/g, '');
 
