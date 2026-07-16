@@ -33,7 +33,9 @@ module.exports = async (req, res) => {
 
   try {
     // Header artificial de referenciador para que o Google Cloud libere a chave restrita por domínio
-    const reqHeaders = { 'Referer': 'https://markmap-viewer-eight.vercel.app/' };
+    // Usamos req.headers.host para pegar dinamicamente o domínio atual (ex: mapas-tjce.vercel.app)
+    const host = req.headers.host || 'markmap-viewer-eight.vercel.app';
+    const reqHeaders = { 'Referer': `https://${host}/` };
 
     // 1. Busca os metadados do arquivo (especialmente o nome) via Google Drive API v3
     const metaRes = await fetch(
@@ -70,13 +72,7 @@ module.exports = async (req, res) => {
 
     description = `Mapa mental sobre "${title}" — criado com Markmap Viewer + Google Drive.`;
   } catch (e) {
-    title = 'ERRO_CATCH: ' + e.message;
     console.error('[render] Erro inesperado ao buscar Drive:', e.message);
-  }
-
-  // Se o título não mudou do padrão, significa que falhou nas requisições. Vamos tentar mostrar o motivo:
-  if (title === 'Mapa Mental Interativo' && globalErrorMsg) {
-      title = 'ERRO_API: ' + globalErrorMsg;
   }
 
   // 3. Substitui os OG tags no HTML antes de devolver ao crawler
