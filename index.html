@@ -338,6 +338,17 @@
 
     .map-panel { flex: 1; min-width: 180px; }
 
+    /* Gallery Styles */
+    .gallery-panel { flex: 1; width: 100%; height: 100%; overflow-y: auto; background: var(--bg2); padding: 40px; display: none; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; }
+    .gallery-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; gap: 12px; text-decoration: none; }
+    .gallery-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); border-color: var(--primary); }
+    .gallery-card h3 { margin: 0; font-size: 1.1em; color: var(--text); line-height: 1.4; }
+    .gallery-card .meta { font-size: 0.85em; color: var(--text-subtle); display: flex; align-items: center; gap: 6px; }
+    .gallery-title { text-align: center; color: var(--text); margin-bottom: 30px; font-weight: 700; font-size: 1.8em; }
+    .admin-only { display: none; }
+
+
     .panel-hdr {
       display: flex;
       align-items: center;
@@ -873,7 +884,7 @@
       Pagar um Café
     </button>
     <!-- Google Drive Button -->
-    <button class="btn btn-primary" id="btn-gdrive" onclick="handleAuthClick()" style="gap: 6px; background: #1a73e8; border-color: #1a73e8; color: white;">
+    <button class="btn btn-primary" id="btn-gdrive" onclick="handleAuthClick()" class="admin-only" style="gap: 6px; background: #1a73e8; border-color: #1a73e8; color: white; display: none;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
       </svg>
@@ -942,6 +953,15 @@
      MAIN
 ═════════════════════════════════════════════════════════ -->
 <main id="main">
+
+  
+  <!-- GALLERY -->
+  <div class="panel gallery-panel" id="gallery-panel">
+    <h2 class="gallery-title">Mapas Mentais TJCE</h2>
+    <div class="gallery-grid" id="gallery-grid">
+      <div style="text-align:center; grid-column: 1 / -1; color: var(--text-subtle);">Carregando mapas da nuvem...</div>
+    </div>
+  </div>
 
   <!-- EDITOR -->
   <div class="panel editor-panel" id="editor-panel">
@@ -1663,7 +1683,7 @@ function activateReadMode(title) {
   const btnDrive    = document.getElementById('btn-gdrive');
   const exportWrap  = document.querySelector('.export-wrap');
   
-  if (editorPanel) editorPanel.style.display = 'none';
+  // if (editorPanel) editorPanel.style.display = 'none';
   if (btnToggle)   btnToggle.style.display   = 'none';
   if (btnDrive)    btnDrive.style.display    = 'none';
   if (exportWrap)  exportWrap.style.display  = 'none';
