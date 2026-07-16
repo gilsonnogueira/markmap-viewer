@@ -39,12 +39,12 @@ module.exports = async (req, res) => {
 
     const drive = google.drive({ version: 'v3', auth });
 
-    // Busca os arquivos dentro da pasta, filtrando lixeira e pastas
+    // Busca TODOS os arquivos e pastas que o Robô tem acesso
     const response = await drive.files.list({
-      q: `'${folderId}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false`,
-      fields: 'files(id, name, modifiedTime)',
-      orderBy: 'modifiedTime desc',
-      pageSize: 100, // Ajuste se tiver mais de 100 mapas
+      q: `trashed = false and (mimeType = 'text/markdown' or mimeType = 'application/vnd.google-apps.folder')`,
+      fields: 'files(id, name, mimeType, parents, modifiedTime)',
+      orderBy: 'folder, modifiedTime desc',
+      pageSize: 1000, 
     });
 
     return res.status(200).json({ files: response.data.files });
