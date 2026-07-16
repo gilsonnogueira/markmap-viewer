@@ -1462,8 +1462,14 @@ function driveNewFolder() {
 // Salvar arquivo atual no Drive
 async function driveSaveFile() {
   if (!driveLoggedIn) { handleAuthClick(); return; }
-  const content = document.getElementById('editor').value;
+  let content = document.getElementById('editor').value;
   if (!content.trim()) { showToast('Editor vazio.'); return; }
+
+  // Corrige permanentemente no texto o erro do Obsidian de traço duplo antes de salvar
+  if (content.match(/^(\s*)-\s+-\s+\[/gm)) {
+    content = content.replace(/^(\s*)-\s+-\s+\[/gm, '$1- [');
+    document.getElementById('editor').value = content;
+  }
 
   try {
     if (currentFileId) {
