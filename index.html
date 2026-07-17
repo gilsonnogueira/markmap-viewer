@@ -877,7 +877,7 @@
     <div class="logo-divider"></div>
     <span class="logo-sub">Gilson Nogueira</span>
     <div class="logo-divider" id="btn-back-divider" style="display:none; margin-left: 8px;"></div>
-    <button id="btn-back-gallery" class="btn" style="display:none;" onclick="window.location.href='/'">
+    <button id="btn-back-gallery" class="btn" style="display:none;" onclick="goBackToGallery()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
       Vitrine
     </button>
@@ -2008,7 +2008,8 @@ async function loadGallery() {
         const date = new Date(f.modifiedTime).toLocaleDateString('pt-BR');
         const card = document.createElement('a');
         card.className = 'gallery-card';
-        card.href = '?id=' + f.id;
+        card.href = 'javascript:void(0)';
+        card.onclick = (e) => { e.preventDefault(); openMapSPA(f.id); };
         card.innerHTML = `
           <h3>${name}</h3>
           <div class="meta">
@@ -2027,6 +2028,66 @@ async function loadGallery() {
     grid.innerHTML = '<div style="text-align:center; grid-column: 1 / -1; color: var(--danger);">Erro ao carregar a vitrine.</div>';
   }
 }
+
+/* ─────────────────────────────────────────────────────────
+   SPA NAVIGATION
+───────────────────────────────────────────────────────── */
+function goBackToGallery() {
+  history.pushState(null, '', '/');
+  document.getElementById('editor-panel').style.display = 'none';
+  document.getElementById('map-panel').style.display = 'none';
+  
+  const gp = document.getElementById('gallery-panel');
+  if (gp) gp.style.display = 'block';
+  
+  const backBtn = document.getElementById('btn-back-gallery');
+  if (backBtn) backBtn.style.display = 'none';
+  const backDiv = document.getElementById('btn-back-divider');
+  if (backDiv) backDiv.style.display = 'none';
+  
+  document.title = 'Markmap — Vitrine';
+  
+  if (!document.querySelector('.gallery-card')) {
+    loadGallery();
+  }
+}
+
+function openMapSPA(id) {
+  history.pushState(null, '', '/?id=' + id);
+  const gp = document.getElementById('gallery-panel');
+  if (gp) gp.style.display = 'none';
+  document.getElementById('map-panel').style.display = 'flex';
+  
+  const backBtn = document.getElementById('btn-back-gallery');
+  if (backBtn) backBtn.style.display = 'inline-flex';
+  const backDiv = document.getElementById('btn-back-divider');
+  if (backDiv) backDiv.style.display = 'block';
+  
+  if (typeof driveLoggedIn !== 'undefined' && driveLoggedIn) {
+    const editor = document.getElementById('editor-panel');
+    editor.style.display = 'flex';
+    editor.classList.remove('hidden');
+    document.getElementById('resizer').style.display = 'block';
+  } else {
+    document.getElementById('editor-panel').style.display = 'none';
+    document.getElementById('resizer').style.display = 'none';
+  }
+  
+  document.getElementById('markmap-svg').innerHTML = '';
+  document.getElementById('editor').value = 'Carregando...';
+  
+  loadSharedMap();
+}
+
+window.addEventListener('popstate', () => {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (id) {
+    openMapSPA(id);
+  } else {
+    goBackToGallery();
+  }
+});
 
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -2057,6 +2118,15 @@ window.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', e => {
     if (!document.querySelector('.export-wrap').contains(e.target)) {
       closeExportDrop();
+    }
+  });
+  
+  document.getElementById('markmap-svg').addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (a && a.getAttribute('href') && a.getAttribute('href').startsWith('/?id=')) {
+      e.preventDefault();
+      const targetId = new URLSearchParams(a.getAttribute('href').split('?')[1]).get('id');
+      if (targetId) openMapSPA(targetId);
     }
   });
 });
