@@ -1699,9 +1699,18 @@ async function loadSharedMap() {
       console.warn('Não foi possível obter os metadados do arquivo:', metaErr);
     }
 
-    // 2. Faz download público direto (não precisa de token OAuth) do conteúdo do markdown (.md)
+    // 2. Faz download público direto (não precisa de token OAuth) e galeria em paralelo
     const url = `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${API_KEY}`;
-    const res = await fetch(url);
+    const [res, galRes] = await Promise.all([
+      fetch(url),
+      window.galleryFiles ? Promise.resolve(null) : fetch('/api/gallery').catch(()=>null)
+    ]);
+    
+    if (galRes && galRes.ok) {
+      const galData = await galRes.json();
+      window.galleryFiles = galData.files || [];
+    }
+
     if (!res.ok) throw new Error('Arquivo não encontrado ou não público.');
     const text = await res.text();
     document.getElementById('editor').value = text;
@@ -1928,6 +1937,7 @@ async function loadGallery() {
     
     // Separar pastas e arquivos
     const allFiles = data.files;
+    window.galleryFiles = allFiles; // Salva globalmente para os links Obsidian
     const isFolder = f => f.mimeType === 'application/vnd.google-apps.folder';
     const folders = allFiles.filter(isFolder);
     const files = allFiles.filter(f => !isFolder(f));
@@ -2060,6 +2070,20 @@ function preprocessMD(md) {
 
   // 1. Remove marcadores markdown globais
   md = md.replace(/^```[a-z]*\n/gi, '').replace(/\n```$/g, '');
+
+  // NOVO: Converte links Obsidian [[Nome do Mapa]] ou [[Nome do Mapa|Texto Alternativo]]
+  md = md.replace(/\[\[([^\]\|]+)(?:\|([^\]]+))?\]\]/g, (match, target, alias) => {
+    let linkText = alias || target;
+    if (window.galleryFiles && window.galleryFiles.length > 0) {
+      const targetClean = target.trim().toLowerCase().replace(/\.md$/, '');
+      const file = window.galleryFiles.find(f => f.name.toLowerCase().replace(/\.md$/, '') === targetClean);
+      if (file) {
+        return `[${linkText}](/?id=${file.id})`;
+      }
+    }
+    // Se não encontrar, apenas renderiza o texto (Obsidian default fallback)
+    return linkText;
+  });
 
   const lines = md.split('\n');
   const out = [];
