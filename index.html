@@ -684,12 +684,10 @@
       color: var(--text) !important;
     }
 
-    /* Correção agressiva para checkboxes no Markmap */
-    #markmap-svg foreignObject input[type="checkbox"],
-    #markmap-svg foreignObject .markmap-foreign input[type="checkbox"],
-    #markmap-svg foreignObject span.checkbox {
+    /* Correção robusta para visualização de checkboxes no Markmap */
+    #markmap-svg foreignObject input[type="checkbox"] {
       display: inline-block !important;
-      appearance: checkbox !important;
+      appearance: auto !important;
       -webkit-appearance: checkbox !important;
       opacity: 1 !important;
       visibility: visible !important;
@@ -697,6 +695,14 @@
       width: 14px !important;
       height: 14px !important;
       z-index: 999 !important;
+      position: static !important;
+      margin-right: 8px !important;
+    }
+    
+    /* Garantir visibilidade dos itens de lista */
+    #markmap-svg foreignObject .markmap-foreign li {
+      display: flex !important;
+      align-items: center !important;
     }
 
     /* Estilos para Callouts, Tabelas e Highlights injetados */
@@ -2916,5 +2922,6 @@ loadSharedMap();
 
 </body>
 </html>
-< ! - -   t r i g g e r   d e p l o y   - - >  
+< ! - -   t r i g g e r   d e p l o y   - - > 
+ 
  
