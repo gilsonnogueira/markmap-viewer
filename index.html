@@ -668,6 +668,11 @@
       box-shadow: none !important;
     }
 
+    /* FIX: KaTeX no modo Dark */
+    :root[data-theme="dark"] .katex {
+      color: var(--text) !important;
+    }
+
     /* Estilos para Callouts, Tabelas e Highlights injetados */
     #markmap-svg foreignObject mark {
       background: rgba(227, 179, 65, 0.25) !important;
