@@ -1732,13 +1732,16 @@ async function loadSharedMap() {
  */
 function activateReadMode(title) {
   const editorPanel = document.getElementById('editor-panel');
+  const resizer     = document.getElementById('resizer');
   const mapPanel    = document.getElementById('map-panel');
-  const btnToggle   = document.getElementById('btn-toggle-editor');
   const btnDrive    = document.getElementById('btn-gdrive');
   const exportWrap  = document.querySelector('.export-wrap');
   
-  if (editorPanel) editorPanel.style.display = 'none';
-  if (btnToggle)   btnToggle.style.display   = 'none';
+  if (editorPanel) {
+    editorPanel.style.display = ''; // Limpa o display none inline se houver
+    editorPanel.classList.add('hidden');
+  }
+  if (resizer)     resizer.style.display     = 'none';
   if (btnDrive)    btnDrive.style.display    = 'none';
   if (exportWrap)  exportWrap.style.display  = 'none';
   
