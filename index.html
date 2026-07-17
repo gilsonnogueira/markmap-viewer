@@ -1283,10 +1283,13 @@ function handleAuthClick() {
       }
     } catch(e) { console.error('Erro de email:', e); }
 
-    const gp = document.getElementById('gallery-panel');
-    if (gp) gp.style.display = 'none';
-    document.getElementById('map-panel').style.display = 'flex';
-    document.getElementById('editor-panel').style.display = 'flex';
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('id')) {
+      document.getElementById('editor-panel').style.display = 'flex';
+      document.getElementById('editor-panel').classList.remove('hidden');
+      document.getElementById('resizer').style.display = 'block';
+    }
+
     const btnAdmin = document.getElementById('btn-admin-login');
     if (btnAdmin) btnAdmin.style.display = 'none';
     const btnDrive = document.getElementById('btn-gdrive');
