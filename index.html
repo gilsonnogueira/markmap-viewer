@@ -2938,6 +2938,19 @@ loadSharedMap();
       if (target) observer.observe(target, { childList: true, subtree: true });
     });
   </script>
+<script>
+    window.addEventListener('load', () => {
+      const observer = new MutationObserver(() => {
+        document.querySelectorAll('#markmap-svg foreignObject li').forEach(li => {
+          li.innerHTML = li.innerHTML
+            .replace(/\[x\]/g, '✅')
+            .replace(/\[\s+\]/g, '⬜');
+        });
+      });
+      const target = document.getElementById('markmap-svg');
+      if (target) observer.observe(target, { childList: true, subtree: true });
+    });
+  </script>
 </body>
 </html>
 < ! - -   t r i g g e r   d e p l o y   - - > 
