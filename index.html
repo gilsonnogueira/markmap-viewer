@@ -684,6 +684,21 @@
       color: var(--text) !important;
     }
 
+    /* Correção agressiva para checkboxes no Markmap */
+    #markmap-svg foreignObject input[type="checkbox"],
+    #markmap-svg foreignObject .markmap-foreign input[type="checkbox"],
+    #markmap-svg foreignObject span.checkbox {
+      display: inline-block !important;
+      appearance: checkbox !important;
+      -webkit-appearance: checkbox !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      width: 14px !important;
+      height: 14px !important;
+      z-index: 999 !important;
+    }
+
     /* Estilos para Callouts, Tabelas e Highlights injetados */
     #markmap-svg foreignObject mark {
       background: rgba(227, 179, 65, 0.25) !important;
