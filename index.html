@@ -2920,6 +2920,24 @@ function tick() { return new Promise(r => requestAnimationFrame(() => requestAni
 loadSharedMap();
 </script>
 
+<script>
+    // Monitora o render para garantir que checkboxes sejam convertidos em ícones
+    const observer = new MutationObserver(() => {
+      const nodes = document.querySelectorAll('#markmap-svg foreignObject');
+      nodes.forEach(node => {
+        if (node.innerHTML.includes('[x]') || node.innerHTML.includes('[ ]')) {
+          node.innerHTML = node.innerHTML
+            .replace(/\[x\]/g, '✅')
+            .replace(/\[ \]/g, '⬜');
+        }
+      });
+    });
+    
+    window.addEventListener('load', () => {
+      const target = document.getElementById('markmap-svg');
+      if (target) observer.observe(target, { childList: true, subtree: true });
+    });
+  </script>
 </body>
 </html>
 < ! - -   t r i g g e r   d e p l o y   - - > 
