@@ -2208,14 +2208,15 @@ function preprocessMD(md) {
     let line = lines[i];
 
     // 2. Parser de Callouts do Obsidian: `  - > [!WARNING] Titulo`
-    const calloutMatch = line.match(/^(\s*)(?:-\s*)?>\s*\[!([A-Za-z]+)\](.*)/);
+    // Agora suporta tags HTML antes do `>` (ex: `- <span style="..."> > [!NOTE]`)
+    const calloutMatch = line.match(/^(\s*(?:-\s*)?(?:<[^>]+>\s*)*)>\s*\[!([A-Za-z]+)\](.*)/);
     if (calloutMatch) {
-      let indent = calloutMatch[1];
+      let prefix = calloutMatch[1];
       let type = calloutMatch[2].toLowerCase();
       let title = calloutMatch[3].trim();
       
-      let colors = { warning: '#d97706', danger: '#ef4444', error: '#ef4444', success: '#22c55e', info: '#3b82f6' };
-      let icons = { warning: '⚠️', danger: '🚫', error: '🚫', success: '✅', info: 'ℹ️' };
+      let colors = { warning: '#d97706', danger: '#ef4444', error: '#ef4444', success: '#22c55e', info: '#3b82f6', note: '#3b82f6' };
+      let icons = { warning: '⚠️', danger: '🚫', error: '🚫', success: '✅', info: 'ℹ️', note: '📝' };
       
       let color = colors[type] || '#8b5cf6';
       let icon = icons[type] || '💡';
@@ -2228,7 +2229,7 @@ function preprocessMD(md) {
       let j = i + 1;
       while (j < lines.length) {
         let nextMatch = lines[j].match(/^(\s*)>(.*)/);
-        if (nextMatch && !lines[j].match(/^(\s*)(?:-\s*)?>\s*\[!/)) {
+        if (nextMatch && !lines[j].match(/^(\s*(?:-\s*)?(?:<[^>]+>\s*)*)>\s*\[!/)) {
           let text = nextMatch[2].trim();
           text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
           text = text.replace(/==(.*?)==/g, '<mark>$1</mark>');
@@ -2239,7 +2240,12 @@ function preprocessMD(md) {
         }
       }
       html += `</div>`;
-      out.push(`${indent}- ${html}`);
+      
+      let outPrefix = prefix;
+      if (!outPrefix.includes('-') && !outPrefix.includes('#')) {
+        outPrefix = outPrefix.replace(/(\s*)$/, '') + ' - ';
+      }
+      out.push(`${outPrefix}${html}`);
       i = j - 1;
       continue;
     }
