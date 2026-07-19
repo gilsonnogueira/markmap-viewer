@@ -4,7 +4,9 @@ Um visualizador e editor de mapas mentais interativos baseado na biblioteca **Ma
 
 Ideal para estudantes e profissionais que necessitam organizar tópicos complexos, fazer revisão ativa de conteúdo, e compartilhar esquemas estruturados.
 
-👉 **Acesso rápido:** [gilsonnogueira.github.io/markmap-viewer](https://gilsonnogueira.github.io/markmap-viewer/)
+👉 **Acesso rápido:** [mapas-gilson.vercel.app](https://mapas-gilson.vercel.app/)
+
+<a href="https://ko-fi.com/gilsonnogueira" target="_blank"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me a Coffee at ko-fi.com" height="36" style="border:0px;height:36px;" /></a>
 
 ---
 
@@ -36,6 +38,8 @@ Ideal para estudantes e profissionais que necessitam organizar tópicos complexo
 
 ## 🗂 Estrutura e Padrão de Codificação do TJCE
 
+Para um estudo aprofundado das técnicas de retenção, curva de esquecimento e elaboração de mapas, consulte o [Guia de Criação de Mapas Mentais](Guia_Criacao_Mapas_Mentais.md) incluído no repositório.
+
 O template embutido no projeto segue a seguinte convenção hierárquica e estilística recomendada:
 
 ```yaml
@@ -61,15 +65,17 @@ markmap:
 
 O projeto é uma aplicação Single Page Application (SPA) que utiliza uma arquitetura descentralizada para garantir alta performance e privacidade dos dados.
 
+*Fluxo de Dados e Limites de Confiança:*
+
 ```mermaid
 graph LR
     User[Usuário] -->|Edita/Visualiza| SPA(Markmap Viewer)
-    SPA -->|Autenticação| Auth[Google Identity Services]
-    SPA -->|Leitura/Escrita| Drive{Google Drive API v3}
+    SPA -->|Autenticação OAuth| Auth[Google Identity Services]
+    SPA -->|Leitura/Escrita| Drive[(Google Drive API v3)]
     Drive -.->|Sincroniza .settings| SPA
 ```
 
-Para uma análise detalhada dos fluxos e componentes técnicos, veja o [Diagrama de Arquitetura Interativo](architecture.html).
+A aplicação não possui backend próprio, garantindo que 100% do tráfego de dados sensíveis ocorra diretamente e exclusivamente entre o navegador do usuário (Frontend) e os serviços de armazenamento e identidade do Google.
 
 ---
 
