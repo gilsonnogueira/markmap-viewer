@@ -1101,6 +1101,9 @@
           <button class="btn btn-icon" onclick="collapseAll()" title="Recolher tudo">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
           </button>
+          <button class="btn btn-icon" id="btn-next-map" onclick="driveOpenNextMap()" title="Próximo mapa da pasta" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
       </div>
 
@@ -1324,6 +1327,9 @@ let currentFileId   = null; // ID do arquivo .md aberto/salvo atualmente
 let modalCallback   = null; // função chamada ao confirmar o modal
 let settingsFileId  = null; // ID do arquivo .markmap-settings.json
 
+let currentMapFiles = []; // Lista de mapas da pasta atual (ordem alfabética)
+let currentMapIndex = -1; // Índice do mapa atual aberto
+
 // Garante pasta raiz Markmap Viewer no Drive
 let mmRootFolderId = null;
 
@@ -1479,6 +1485,7 @@ async function driveListFiles(folderId) {
       orderBy: 'folder,name',
     });
     const files = res.result.files || [];
+    currentMapFiles = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
     if (files.length === 0) {
       list.innerHTML = '<div class="drive-empty">Pasta vazia</div>';
       return;
@@ -1559,6 +1566,13 @@ async function driveOpenFile(f) {
     });
     document.getElementById('editor').value = res.body;
     currentFileId = f.id;
+    if (currentMapFiles.length > 0) {
+      currentMapIndex = currentMapFiles.findIndex(m => m.id === f.id);
+      const btnNext = document.getElementById('btn-next-map');
+      if (btnNext) {
+        btnNext.style.display = (currentMapIndex !== -1 && currentMapFiles.length > 1) ? 'inline-flex' : 'none';
+      }
+    }
     showToast(`☁️ "${f.name}" carregado!`);
     updateEditorTitle(f.name);
     closeDrivePanel();
@@ -1566,6 +1580,15 @@ async function driveOpenFile(f) {
   } catch(e) {
     showToast('Erro ao abrir arquivo.');
   }
+}
+
+function driveOpenNextMap() {
+  if (currentMapFiles.length === 0 || currentMapIndex === -1) return;
+  let nextIndex = currentMapIndex + 1;
+  if (nextIndex >= currentMapFiles.length) {
+    nextIndex = 0; // Loop around
+  }
+  driveOpenFile(currentMapFiles[nextIndex]);
 }
 
 // Criar nova pasta
@@ -2369,25 +2392,33 @@ function zoomBy(factor) {
 
 function fitMap()     { mm?.fit(); }
 
+let lastCollapseDepth = null;
+
 function expandAll() {
   if (!mm) return;
-  walkFold(mm.state?.data ?? mm.state, false);
+  lastCollapseDepth = null;
+  walkFold(mm.state?.data ?? mm.state, 999);
   mm.renderData?.();
   mm.fit();
 }
 
 function collapseAll() {
   if (!mm) return;
-  walkFold(mm.state?.data ?? mm.state, true);
+  if (lastCollapseDepth === 1) {
+    lastCollapseDepth = 0;
+  } else {
+    lastCollapseDepth = 1;
+  }
+  walkFold(mm.state?.data ?? mm.state, lastCollapseDepth);
   mm.renderData?.();
   mm.fit();
 }
 
-function walkFold(node, fold) {
+function walkFold(node, targetDepth, currentDepth = 0) {
   if (!node) return;
   if (!node.payload) node.payload = {};
-  node.payload.fold = fold ? 2 : 0;
-  node.children?.forEach(c => walkFold(c, fold));
+  node.payload.fold = currentDepth >= targetDepth ? 2 : 0;
+  node.children?.forEach(c => walkFold(c, targetDepth, currentDepth + 1));
 }
 
 /* ─────────────────────────────────────────────────────────
