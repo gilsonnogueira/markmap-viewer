@@ -1101,6 +1101,9 @@
           <button class="btn btn-icon" onclick="collapseAll()" title="Recolher tudo">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
           </button>
+          <button class="btn btn-icon" id="btn-prev-map" onclick="driveOpenPrevMap()" title="Mapa anterior da pasta" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
           <button class="btn btn-icon" id="btn-next-map" onclick="driveOpenNextMap()" title="Próximo mapa da pasta" style="display: none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
@@ -1569,9 +1572,9 @@ async function driveOpenFile(f) {
     if (currentMapFiles.length > 0) {
       currentMapIndex = currentMapFiles.findIndex(m => m.id === f.id);
       const btnNext = document.getElementById('btn-next-map');
-      if (btnNext) {
-        btnNext.style.display = (currentMapIndex !== -1 && currentMapFiles.length > 1) ? 'inline-flex' : 'none';
-      }
+      const btnPrev = document.getElementById('btn-prev-map');
+      if (btnNext) btnNext.style.display = (currentMapIndex !== -1 && currentMapFiles.length > 1) ? 'inline-flex' : 'none';
+      if (btnPrev) btnPrev.style.display = (currentMapIndex !== -1 && currentMapFiles.length > 1) ? 'inline-flex' : 'none';
     }
     showToast(`☁️ "${f.name}" carregado!`);
     updateEditorTitle(f.name);
@@ -1580,6 +1583,15 @@ async function driveOpenFile(f) {
   } catch(e) {
     showToast('Erro ao abrir arquivo.');
   }
+}
+
+function driveOpenPrevMap() {
+  if (currentMapFiles.length === 0 || currentMapIndex === -1) return;
+  let prevIndex = currentMapIndex - 1;
+  if (prevIndex < 0) {
+    prevIndex = currentMapFiles.length - 1; // Loop around
+  }
+  driveOpenFile(currentMapFiles[prevIndex]);
 }
 
 function driveOpenNextMap() {
