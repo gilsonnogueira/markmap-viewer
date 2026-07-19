@@ -54,9 +54,25 @@ markmap:
 - **Nível 2 (Subtópicos):** `- <span style="font-size: 1.1em;">**Subtópico**</span>`
 - **Nível 3+:** Subtópicos em formato markdown simples com listas não ordenadas.
 
+
 ---
 
-## 🛠 Tecnologias Utilizadas
+## 🏗️ Arquitetura do Sistema
+
+O projeto é uma aplicação Single Page Application (SPA) que utiliza uma arquitetura descentralizada para garantir alta performance e privacidade dos dados.
+
+```mermaid
+graph LR
+    User[Usuário] -->|Edita/Visualiza| SPA(Markmap Viewer)
+    SPA -->|Autenticação| Auth[Google Identity Services]
+    SPA -->|Leitura/Escrita| Drive{Google Drive API v3}
+    Drive -.->|Sincroniza .settings| SPA
+```
+
+Para uma análise detalhada dos fluxos e componentes técnicos, veja o [Diagrama de Arquitetura Interativo](architecture.html).
+
+---
+
 
 - **Núcleo Lógico e Visual:** HTML5 Semântico, CSS Vanilla (Estilo personalizado com paleta baseada em HSL e variáveis CSS dinâmicas para modo escuro/claro).
 - **Bibliotecas de Terceiros:**

@@ -1591,7 +1591,12 @@ function driveOpenPrevMap() {
   if (prevIndex < 0) {
     prevIndex = currentMapFiles.length - 1; // Loop around
   }
-  driveOpenFile(currentMapFiles[prevIndex]);
+  const f = currentMapFiles[prevIndex];
+  if (typeof driveLoggedIn !== 'undefined' && driveLoggedIn) {
+    driveOpenFile(f);
+  } else {
+    openMapSPA(f.id);
+  }
 }
 
 function driveOpenNextMap() {
@@ -1600,7 +1605,12 @@ function driveOpenNextMap() {
   if (nextIndex >= currentMapFiles.length) {
     nextIndex = 0; // Loop around
   }
-  driveOpenFile(currentMapFiles[nextIndex]);
+  const f = currentMapFiles[nextIndex];
+  if (typeof driveLoggedIn !== 'undefined' && driveLoggedIn) {
+    driveOpenFile(f);
+  } else {
+    openMapSPA(f.id);
+  }
 }
 
 // Criar nova pasta
@@ -1789,6 +1799,21 @@ async function loadSharedMap() {
     if (galRes && galRes.ok) {
       const galData = await galRes.json();
       window.galleryFiles = galData.files || [];
+    }
+
+    if (window.galleryFiles && window.galleryFiles.length > 0) {
+      const fileInfo = window.galleryFiles.find(f => f.id === id);
+      if (fileInfo && fileInfo.parents && fileInfo.parents.length > 0) {
+        const parentId = fileInfo.parents[0];
+        currentMapFiles = window.galleryFiles.filter(f => f.parents && f.parents.includes(parentId) && f.mimeType !== 'application/vnd.google-apps.folder');
+        currentMapFiles.sort((a, b) => a.name.localeCompare(b.name));
+        currentMapIndex = currentMapFiles.findIndex(m => m.id === id);
+        
+        const btnNext = document.getElementById('btn-next-map');
+        const btnPrev = document.getElementById('btn-prev-map');
+        if (btnNext) btnNext.style.display = (currentMapIndex !== -1 && currentMapFiles.length > 1) ? 'inline-flex' : 'none';
+        if (btnPrev) btnPrev.style.display = (currentMapIndex !== -1 && currentMapFiles.length > 1) ? 'inline-flex' : 'none';
+      }
     }
 
     if (!res.ok) throw new Error('Arquivo não encontrado ou não público.');
