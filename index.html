@@ -354,6 +354,10 @@
 
     .map-panel { flex: 1; min-width: 180px; }
 
+    /* Toolbar Styles */
+    .md-toolbar { display: flex; gap: 4px; padding: 6px 12px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+    .md-toolbar .btn-icon { padding: 4px 8px; font-size: 14px; font-weight: 600; width: auto; height: auto; min-width: 32px; min-height: 32px; border-radius: 4px; }
+    
     /* Gallery Styles */
     .gallery-panel { flex: 1; width: 100%; height: 100%; overflow-y: auto; background: var(--bg2); padding: 40px; display: none; }
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; }
@@ -1065,6 +1069,13 @@
           Renderizar
         </button>
       </div>
+    </div>
+    <div class="md-toolbar">
+      <button class="btn btn-icon" onclick="formatText('**')" title="Negrito (Ctrl+B)"><b>B</b></button>
+      <button class="btn btn-icon" onclick="formatText('*')" title="Itálico (Ctrl+I)"><i>I</i></button>
+      <button class="btn btn-icon" onclick="formatText('', '- ')" title="Lista (Marcador)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+      <button class="btn btn-icon" onclick="formatText('', '# ')" title="Título (#)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></button>
+      <button class="btn btn-icon" onclick="insertLink()" title="Inserir Link">🔗</button>
     </div>
     <textarea
       id="editor"
@@ -2724,10 +2735,6 @@ function exportPDF(theme) {
         /* máximo contraste P&B para e-readers e impressão */
         text { fill: #000000 !important; font-weight: 500 !important; }
         .markmap-node circle {
-          fill: #ffffff !important;
-          stroke: #000000 !important;
-          stroke-width: 1.5 !important;
-        }
         foreignObject *      { color: #000000 !important; }
         foreignObject strong,
         foreignObject b      { color: #000000 !important; font-weight: 700 !important; }
@@ -2894,6 +2901,54 @@ function loadTemplate() {
   updateEditorTitle(null);
   render();
   ed.focus();
+}
+
+/**
+ * Funções de formatação de texto para o editor WYSIWYG.
+ */
+function formatText(wrap, prefix = '') {
+  const ta = document.getElementById('editor');
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const selected = ta.value.substring(start, end);
+  let replacement = '';
+  
+  if (prefix) {
+    const lines = selected.split('\n');
+    replacement = lines.map(l => prefix + l).join('\n');
+    ta.value = ta.value.substring(0, start) + replacement + ta.value.substring(end);
+    ta.selectionStart = start;
+    ta.selectionEnd = start + replacement.length;
+  } else {
+    replacement = wrap + selected + wrap;
+    ta.value = ta.value.substring(0, start) + replacement + ta.value.substring(end);
+    if (selected) {
+      ta.selectionStart = ta.selectionEnd = start + replacement.length;
+    } else {
+      ta.selectionStart = ta.selectionEnd = start + wrap.length;
+    }
+  }
+  ta.focus();
+  render();
+}
+
+function insertLink() {
+  const ta = document.getElementById('editor');
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const selected = ta.value.substring(start, end);
+  const replacement = `[${selected || 'texto'}](url)`;
+  ta.value = ta.value.substring(0, start) + replacement + ta.value.substring(end);
+  
+  if (!selected) {
+    ta.selectionStart = start + 1;
+    ta.selectionEnd = start + 6; // 'texto'
+  } else {
+    ta.selectionStart = start + selected.length + 3;
+    ta.selectionEnd = start + selected.length + 6; // 'url'
+  }
+  ta.focus();
+  render();
 }
 
 /**
