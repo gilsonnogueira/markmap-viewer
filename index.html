@@ -1073,9 +1073,13 @@
     <div class="md-toolbar">
       <button class="btn btn-icon" onclick="formatText('**')" title="Negrito (Ctrl+B)"><b>B</b></button>
       <button class="btn btn-icon" onclick="formatText('*')" title="Itálico (Ctrl+I)"><i>I</i></button>
-      <button class="btn btn-icon" onclick="formatText('', '- ')" title="Lista (Marcador)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
-      <button class="btn btn-icon" onclick="formatText('', '# ')" title="Título (#)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></button>
-      <button class="btn btn-icon" onclick="insertLink()" title="Inserir Link">🔗</button>
+      <button class="btn btn-icon" onclick="formatText('~~')" title="Tachado (Ctrl+Shift+X)"><s style="text-decoration:line-through">S</s></button>
+      <button class="btn btn-icon" onclick="formatText('==')" title="Destaque (Ctrl+H)"><mark style="background:var(--primary);color:#fff;padding:0 2px;border-radius:2px;">H</mark></button>
+      <button class="btn btn-icon" onclick="formatText('`')" title="Código (Ctrl+E)"><span style="font-family:monospace;font-size:12px;">&lt;/&gt;</span></button>
+      <button class="btn btn-icon" onclick="formatText('', '- ')" title="Lista (Ctrl+L)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+      <button class="btn btn-icon" onclick="formatText('', '# ')" title="Título"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></button>
+      <button class="btn btn-icon" onclick="formatText('', '> ')" title="Citação (Ctrl+Q)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.5-2 4-4 4"/></svg></button>
+      <button class="btn btn-icon" onclick="insertLink()" title="Link (Ctrl+K)">🔗</button>
     </div>
     <textarea
       id="editor"
@@ -2981,14 +2985,35 @@ function setupKeyboard() {
     if (e.key === 'Escape') closeExportDrop();
   });
 
-  // Tab → 2 spaces in textarea
+  // Atalhos de formatação e Tab (2 espaços)
   document.getElementById('editor').addEventListener('keydown', e => {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    const ta = e.target;
-    const s  = ta.selectionStart;
-    ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(ta.selectionEnd);
-    ta.selectionStart = ta.selectionEnd = s + 2;
+    const isCmd = e.ctrlKey || e.metaKey;
+    if (isCmd) {
+      const key = e.key.toLowerCase();
+      let handled = true;
+      if (key === 'b') formatText('**');
+      else if (key === 'i') formatText('*');
+      else if (key === 'h') formatText('==');
+      else if (key === 'e') formatText('`');
+      else if (key === 'x' && e.shiftKey) formatText('~~');
+      else if (key === 'k') insertLink();
+      else if (key === 'l') formatText('', '- ');
+      else if (key === 'q') formatText('', '> ');
+      else handled = false;
+
+      if (handled) {
+        e.preventDefault();
+        return;
+      }
+    }
+
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const ta = e.target;
+      const s  = ta.selectionStart;
+      ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(ta.selectionEnd);
+      ta.selectionStart = ta.selectionEnd = s + 2;
+    }
   });
 }
 
