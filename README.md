@@ -113,6 +113,14 @@ A aplicação não possui backend próprio, garantindo que 100% do tráfego de d
 
 ---
 
+## 🗺️ Roadmap e Trabalhos Futuros
+
+Está planejada a automação completa da criação estruturada de mapas mentais utilizando a IA do Google (NotebookLM) conectada diretamente a este sistema e ao Google Drive. 
+
+Para conferir o planejamento técnico e a viabilidade desta arquitetura, consulte o [Estudo de Viabilidade - Automação NotebookLM](docs/Estudo_Viabilidade_NotebookLM.md).
+
+---
+
 ## 📄 Licença
 
 Este projeto é de uso livre para estudos, revisão ativa de conteúdos e fins educacionais.
