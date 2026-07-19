@@ -13,7 +13,7 @@ Ideal para estudantes e profissionais que necessitam organizar tópicos complexo
 ## ✨ Recursos Principais
 
 ### 1. Editor e Renderizador em Tempo Real
-- **Editor Markdown:** Workspace ágil com suporte a indentação automática via tecla `Tab` (inserção de 2 espaços) e renderização ágil por atalho rápido (`Ctrl + Enter`).
+- **Editor Markdown WYSIWYG:** Workspace ágil com barra de ferramentas para formatação rápida e atalhos de teclado (ex: `Ctrl+B` para Negrito, `Ctrl+I` para Itálico), além de suporte a indentação automática via tecla `Tab` (inserção de 2 espaços) e renderização ágil por atalho rápido (`Ctrl + Enter`).
 - **Renderização Rica:** Suporte a frontmatter YAML de configuração do Markmap, tags HTML embutidas (tamanhos de fonte, cores, negrito), tabelas, emojis e delimitadores de quebra.
 - **Interatividade Total:** Controle nativo de aproximação (Zoom), centralização automática (Fit), além de nós expansíveis/retráteis que incentivam o estudo ativo por meio do encobrimento e revelação de conceitos.
 
@@ -26,6 +26,7 @@ Ideal para estudantes e profissionais que necessitam organizar tópicos complexo
 
 ### 3. Modo de Visualização Compartilhada (Shared View)
 - **Modo Leitor Público:** Compartilhamento simples de mapas individuais através de parâmetros de URL (`?id=ID_DO_ARQUIVO`). Qualquer visitante com o link pode visualizar e interagir com o mapa sem precisar de login.
+- **Configuração no Google Cloud Console:** O acesso público é feito via uma `API_KEY` do Google Cloud vinculada a uma Conta de Serviço (Service Account). Para que um mapa apareça na galeria pública, você deve compartilhar a pasta contendo os arquivos `.md` no seu Google Drive diretamente com o e-mail desse bot de serviço.
 - **Controles Preservados:** O visitante tem acesso a ferramentas de ajuste de tamanho de fonte, alternância de tema escuro/claro, botões de zoom e colapso de nós, porém a barra de edição, o painel do Google Drive e as opções de exportação ficam completamente invisíveis.
 - **Segurança de Acesso:** O site utiliza uma leitura pública do arquivo com base em uma `API_KEY` para obter os dados do arquivo marcado como compartilhado, assegurando que o código interno e os outros mapas privados da sua conta permaneçam inacessíveis a terceiros.
 
