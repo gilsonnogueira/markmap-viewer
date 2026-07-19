@@ -36,7 +36,7 @@ Ideal para estudantes e profissionais que necessitam organizar tópicos complexo
 
 ---
 
-## 🗂 Estrutura e Padrão de Codificação do TJCE
+## 🗂 Estrutura e Padrão de Codificação Recomendado
 
 Para um estudo aprofundado das técnicas de retenção, curva de esquecimento e elaboração de mapas, consulte o [Guia de Criação de Mapas Mentais](Guia_Criacao_Mapas_Mentais.md) incluído no repositório.
 
