@@ -1,5 +1,7 @@
 # 🧠 Markmap Viewer
 
+[🇧🇷 Português](README.md) | [🇺🇸 English](README_en.md) | [🇪🇸 Español](README_es.md) | [🇨🇳 中文](README_zh.md) | [🇯🇵 日本語](README_ja.md)
+
 Um visualizador e editor de mapas mentais interativos baseado na biblioteca **Markmap**, desenvolvido sob medida com uma interface de alta fidelidade e persistência de dados integrada diretamente ao **Google Drive**.
 
 Ideal para estudantes e profissionais que necessitam organizar tópicos complexos, fazer revisão ativa de conteúdo, e compartilhar esquemas estruturados.
