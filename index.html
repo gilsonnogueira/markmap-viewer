@@ -1080,6 +1080,7 @@
       <button class="btn btn-icon" onclick="formatText('', '# ')" title="Título"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></button>
       <button class="btn btn-icon" onclick="formatText('', '> ')" title="Citação (Ctrl+Q)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.5-2 4-4 4"/></svg></button>
       <button class="btn btn-icon" onclick="insertLink()" title="Link (Ctrl+K)">🔗</button>
+      <button class="btn btn-icon" onclick="insertText('<br>\n')" title="Quebra de Linha (Shift+Enter)">↩️</button>
     </div>
     <textarea
       id="editor"
@@ -2955,6 +2956,16 @@ function insertLink() {
   render();
 }
 
+function insertText(str) {
+  const ta = document.getElementById('editor');
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, start) + str + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + str.length;
+  ta.focus();
+  render();
+}
+
 /**
  * Limpa toda a área de texto do editor e reseta o ID do arquivo atual em memória.
  */
@@ -3005,6 +3016,12 @@ function setupKeyboard() {
         e.preventDefault();
         return;
       }
+    }
+
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      insertText('<br>\n');
+      return;
     }
 
     if (e.key === 'Tab') {
