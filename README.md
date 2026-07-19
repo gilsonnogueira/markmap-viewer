@@ -13,7 +13,7 @@ Ideal para estudantes e profissionais que necessitam organizar tópicos complexo
 ## ✨ Recursos Principais
 
 ### 1. Editor e Renderizador em Tempo Real
-- **Editor Markdown WYSIWYG:** Workspace ágil com barra de ferramentas para formatação rápida e atalhos de teclado (ex: `Ctrl+B` para Negrito, `Ctrl+I` para Itálico), além de suporte a indentação automática via tecla `Tab` (inserção de 2 espaços) e renderização ágil por atalho rápido (`Ctrl + Enter`).
+- **Editor Markdown WYSIWYG:** Workspace ágil com barra de ferramentas para formatação rápida e atalhos de teclado completos (Negrito `Ctrl+B`, Itálico `Ctrl+I`, Destaque `Ctrl+H`, Código `Ctrl+E`, Tachado `Ctrl+Shift+X`, Link `Ctrl+K`, Lista `Ctrl+L` e Citação `Ctrl+Q`), além de suporte a indentação automática via tecla `Tab` e renderização ágil por atalho rápido (`Ctrl + Enter`).
 - **Renderização Rica:** Suporte a frontmatter YAML de configuração do Markmap, tags HTML embutidas (tamanhos de fonte, cores, negrito), tabelas, emojis e delimitadores de quebra.
 - **Interatividade Total:** Controle nativo de aproximação (Zoom), centralização automática (Fit), além de nós expansíveis/retráteis que incentivam o estudo ativo por meio do encobrimento e revelação de conceitos.
 
@@ -116,3 +116,9 @@ A aplicação não possui backend próprio, garantindo que 100% do tráfego de d
 ## 📄 Licença
 
 Este projeto é de uso livre para estudos, revisão ativa de conteúdos e fins educacionais.
+
+---
+
+## 🙏 Créditos e Agradecimentos
+
+Este projeto foi construído utilizando a incrível biblioteca **[Markmap](https://github.com/markmap/markmap)** como motor principal de renderização dos mapas mentais. Todos os créditos aos desenvolvedores originais e mantenedores do Markmap por tornarem possível a visualização dinâmica de markdown.
