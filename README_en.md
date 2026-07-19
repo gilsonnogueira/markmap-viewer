@@ -111,9 +111,44 @@ Full automation of mind map creation using Google AI (NotebookLM) connected dire
 
 For technical planning and feasibility, see the [NotebookLM Automation Feasibility Study](docs/Estudo_Viabilidade_NotebookLM.md).
 
-<p align="center">
-  <img src="docs/workflow.svg" alt="AI Mind Map Creation Flow" width="100%">
-</p>
+```mermaid
+graph TD
+    classDef source fill:#f9f2f4,stroke:#d0021b,stroke-width:2px;
+    classDef ai fill:#e1f5fe,stroke:#039be5,stroke-width:2px;
+    classDef process fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef decision fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
+    classDef storage fill:#e8f5e9,stroke:#43a047,stroke-width:2px;
+    classDef web fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px;
+
+    A[Study Sources<br>Educational Platforms]:::source
+    B[Raw Materials<br>PDFs & Questions]:::source
+    C[(NotebookLM)]:::ai
+    D[Organization<br>Notebooks by Subject]:::process
+    
+    E[Python Orchestrator<br>Phase 1: Planning]:::process
+    F{Human<br>Approval?}:::decision
+    
+    G[Python Orchestrator<br>Phase 2: Generation]:::process
+    
+    H[(Google Drive)]:::storage
+    I[Markmap Viewer<br>SPA Site]:::web
+
+    A -- "Extraction" --> B
+    B -- "Upload" --> C
+    C -- "Grouping" --> D
+    
+    D -- "Request Structure" --> E
+    E -- "Generate Action Plan" --> F
+    
+    F -- "No" --> E
+    F -- "Yes" --> G
+    
+    G -- "Send Prompts" --> C
+    C -- "Return Markdown" --> G
+    
+    G -- "Upload (API)" --> H
+    H -- "Integration" --> I
+```
 
 ---
 

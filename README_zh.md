@@ -101,9 +101,44 @@ graph LR
 
 有关技术规划和可行性，请参见 [NotebookLM 自动化可行性研究](docs/Estudo_Viabilidade_NotebookLM.md)。
 
-<p align="center">
-  <img src="docs/workflow.svg" alt="AI 思维导图创建流程" width="100%">
-</p>
+```mermaid
+graph TD
+    classDef source fill:#f9f2f4,stroke:#d0021b,stroke-width:2px;
+    classDef ai fill:#e1f5fe,stroke:#039be5,stroke-width:2px;
+    classDef process fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef decision fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
+    classDef storage fill:#e8f5e9,stroke:#43a047,stroke-width:2px;
+    classDef web fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px;
+
+    A[学习资源<br>教育平台]:::source
+    B[原始材料<br>PDF & 问题]:::source
+    C[(NotebookLM)]:::ai
+    D[组织<br>按学科分类的 Notebooks]:::process
+    
+    E[Python 编排器<br>第1阶段：规划]:::process
+    F{人工<br>批准？}:::decision
+    
+    G[Python 编排器<br>第2阶段：生成]:::process
+    
+    H[(Google Drive)]:::storage
+    I[Markmap Viewer<br>SPA 网站]:::web
+
+    A -- "提取" --> B
+    B -- "上传" --> C
+    C -- "分组" --> D
+    
+    D -- "请求结构" --> E
+    E -- "生成行动计划" --> F
+    
+    F -- "否" --> E
+    F -- "是" --> G
+    
+    G -- "发送提示" --> C
+    C -- "返回 Markdown" --> G
+    
+    G -- "上传 (API)" --> H
+    H -- "集成" --> I
+```
 
 ---
 

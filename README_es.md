@@ -99,9 +99,44 @@ La aplicación no tiene backend propio. Todo el tráfico de datos confidenciales
 
 Está planificada la automatización de la creación de mapas mentales utilizando la IA de Google (NotebookLM). Consulta el [Estudio de Viabilidad Técnica](docs/Estudo_Viabilidade_NotebookLM.md).
 
-<p align="center">
-  <img src="docs/workflow.svg" alt="Flujo de Creación de Mapas Mentales con IA" width="100%">
-</p>
+```mermaid
+graph TD
+    classDef source fill:#f9f2f4,stroke:#d0021b,stroke-width:2px;
+    classDef ai fill:#e1f5fe,stroke:#039be5,stroke-width:2px;
+    classDef process fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef decision fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
+    classDef storage fill:#e8f5e9,stroke:#43a047,stroke-width:2px;
+    classDef web fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px;
+
+    A[Fuentes de Estudio<br>Plataformas Educativas]:::source
+    B[Materiales en Bruto<br>PDFs y Preguntas]:::source
+    C[(NotebookLM)]:::ai
+    D[Organización<br>Notebooks por Disciplina]:::process
+    
+    E[Orquestador Python<br>Fase 1: Planificación]:::process
+    F{¿Aprobación<br>Humana?}:::decision
+    
+    G[Orquestador Python<br>Fase 2: Generación]:::process
+    
+    H[(Google Drive)]:::storage
+    I[Markmap Viewer<br>Sitio SPA]:::web
+
+    A -- "Extracción" --> B
+    B -- "Subir" --> C
+    C -- "Agrupación" --> D
+    
+    D -- "Solicita Estructura" --> E
+    E -- "Genera Plan de Acción" --> F
+    
+    F -- "No" --> E
+    F -- "Sí" --> G
+    
+    G -- "Envía Prompts" --> C
+    C -- "Devuelve Markdown" --> G
+    
+    G -- "Subir (API)" --> H
+    H -- "Integración" --> I
+```
 
 ---
 
