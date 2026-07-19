@@ -6,7 +6,7 @@ Ideal para estudantes e profissionais que necessitam organizar tópicos complexo
 
 👉 **Acesso rápido:** [mapas-gilson.vercel.app](https://mapas-gilson.vercel.app/)
 
-<a href="https://ko-fi.com/gilsonnogueira" target="_blank"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me a Coffee at ko-fi.com" height="36" style="border:0px;height:36px;" /></a>
+<a href="https://livepix.gg/gilsonnogueira" target="_blank"><img src="https://img.shields.io/badge/Apoie_o_Projeto-LivePix-00B288?style=for-the-badge&logo=pix&logoColor=white" alt="Apoie via LivePix" /></a>
 
 ---
 
