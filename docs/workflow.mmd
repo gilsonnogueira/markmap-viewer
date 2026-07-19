@@ -1,0 +1,36 @@
+graph TD
+    classDef source fill:#f9f2f4,stroke:#d0021b,stroke-width:2px;
+    classDef ai fill:#e1f5fe,stroke:#039be5,stroke-width:2px;
+    classDef process fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef decision fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
+    classDef storage fill:#e8f5e9,stroke:#43a047,stroke-width:2px;
+    classDef web fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px;
+
+    A[Fontes de Estudo<br>Estratégia / Gran / QConcursos]:::source
+    B[Materiais Brutos<br>PDFs e Questões]:::source
+    C[(NotebookLM)]:::ai
+    D[Organização<br>Notebooks por Disciplina]:::process
+    
+    E[Orquestrador Python<br>Fase 1: Planejamento]:::process
+    F{Aprovação<br>Humana?}:::decision
+    
+    G[Orquestrador Python<br>Fase 2: Geração]:::process
+    
+    H[(Google Drive)]:::storage
+    I[Markmap Viewer<br>Site SPA]:::web
+
+    A -- "Extração" --> B
+    B -- "Upload" --> C
+    C -- "Agrupamento" --> D
+    
+    D -- "Solicita Estrutura" --> E
+    E -- "Gera Plano de Ação" --> F
+    
+    F -- "Não" --> E
+    F -- "Sim" --> G
+    
+    G -- "Envia Prompts" --> C
+    C -- "Retorna Markdown" --> G
+    
+    G -- "Upload (API)" --> H
+    H -- "Integração" --> I

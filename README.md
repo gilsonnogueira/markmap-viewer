@@ -119,6 +119,10 @@ Está planejada a automação completa da criação estruturada de mapas mentais
 
 Para conferir o planejamento técnico e a viabilidade desta arquitetura, consulte o [Estudo de Viabilidade - Automação NotebookLM](docs/Estudo_Viabilidade_NotebookLM.md).
 
+<p align="center">
+  <img src="docs/workflow.svg" alt="Fluxo de Criação de Mapas Mentais via IA" width="100%">
+</p>
+
 ---
 
 ## 📄 Licença
