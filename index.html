@@ -113,6 +113,15 @@
       line-height: 1.5;
     }
 
+    /* Focus Mode */
+    body.focus-mode header,
+    body.focus-mode #editor-panel,
+    body.focus-mode .resizer,
+    body.focus-mode .statusbar,
+    body.focus-mode #gallery-panel {
+      display: none !important;
+    }
+
     /* ═══════════════════════════════════════════════════════
        HEADER
     ═══════════════════════════════════════════════════════ */
@@ -1108,6 +1117,9 @@
           </button>
           <button class="btn btn-icon" onclick="fitMap()" title="Ajustar ao tamanho">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+          <button class="btn btn-icon" onclick="toggleFocusMode()" title="Modo Foco">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
           </button>
         </div>
         <div class="btn-group">
@@ -3124,6 +3136,12 @@ loadSharedMap();
       const target = document.getElementById('markmap-svg');
       if (target) observer.observe(target, { childList: true, subtree: true });
     });
+  </script>
+  <script>
+    function toggleFocusMode() {
+      document.body.classList.toggle('focus-mode');
+      setTimeout(() => { if (typeof fitMap === 'function') fitMap(); }, 150);
+    }
   </script>
 </body>
 </html>
