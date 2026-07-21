@@ -1707,14 +1707,20 @@ async function driveListFiles(folderId) {
       fields: 'files(id,name,mimeType)',
       orderBy: 'folder,name',
     });
-    const files = res.result.files || [];
-    currentMapFiles = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
-    if (files.length === 0) {
+    // Na lista visual, mostrar apenas pastas e arquivos .md (ocultar os .txt de roteiro)
+    const displayFiles = (res.result.files || []).filter(f => 
+      f.mimeType === 'application/vnd.google-apps.folder' || f.name.toLowerCase().endsWith('.md')
+    );
+    
+    // Para navegação prev/next, usar apenas os arquivos .md
+    currentMapFiles = displayFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+    
+    if (displayFiles.length === 0) {
       list.innerHTML = '<div class="drive-empty">Pasta vazia</div>';
       return;
     }
     list.innerHTML = '';
-    files.forEach(f => {
+    displayFiles.forEach(f => {
       const isFolder = f.mimeType === 'application/vnd.google-apps.folder';
       const item = document.createElement('div');
       item.className = 'drive-item' + (isFolder ? ' folder-item' : '');
@@ -2029,7 +2035,11 @@ async function loadSharedMap() {
       const fileInfo = window.galleryFiles.find(f => f.id === id);
       if (fileInfo && fileInfo.parents && fileInfo.parents.length > 0) {
         const parentId = fileInfo.parents[0];
-        currentMapFiles = window.galleryFiles.filter(f => f.parents && f.parents.includes(parentId) && f.mimeType !== 'application/vnd.google-apps.folder');
+        currentMapFiles = window.galleryFiles.filter(f => 
+          f.parents && f.parents.includes(parentId) && 
+          f.mimeType !== 'application/vnd.google-apps.folder' &&
+          f.name.toLowerCase().endsWith('.md')
+        );
         currentMapFiles.sort((a, b) => a.name.localeCompare(b.name));
         currentMapIndex = currentMapFiles.findIndex(m => m.id === id);
         
