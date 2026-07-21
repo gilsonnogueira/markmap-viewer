@@ -568,6 +568,55 @@
       padding-left: 8px;
       border-left: 1px solid var(--border);
     }
+
+    /* TTS Button */
+    #btn-tts {
+      display: none;
+      position: relative;
+      overflow: hidden;
+    }
+    #btn-tts.tts-visible { display: inline-flex; }
+    #btn-tts.tts-playing {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    #btn-tts.tts-paused {
+      background: var(--bg3);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    /* progress bar inside TTS button */
+    #btn-tts-progress {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.5s linear;
+      border-radius: 0 0 var(--r) var(--r);
+    }
+    /* Eq animation bars */
+    .tts-eq {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 1px;
+      height: 12px;
+    }
+    .tts-eq b {
+      display: inline-block;
+      width: 2px;
+      background: currentColor;
+      border-radius: 1px;
+      animation: ttsEq 0.8s ease-in-out infinite alternate;
+    }
+    .tts-eq b:nth-child(1) { height: 4px; animation-delay: 0s; }
+    .tts-eq b:nth-child(2) { height: 10px; animation-delay: 0.15s; }
+    .tts-eq b:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+    @keyframes ttsEq {
+      from { transform: scaleY(0.3); }
+      to   { transform: scaleY(1); }
+    }
     .float-controls .btn {
       width: 30px;
       height: 30px;
@@ -1135,6 +1184,11 @@
           <button class="btn btn-icon" id="btn-next-map" onclick="driveOpenNextMap()" title="Próximo mapa da pasta" style="display: none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
+          <button class="btn btn-icon" id="btn-tts" onclick="ttsToggle()" title="Ouvir roteiro">
+            <span class="tts-eq" id="tts-eq" style="display:none"><b></b><b></b><b></b></span>
+            <svg id="tts-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <div id="btn-tts-progress"></div>
+          </button>
         </div>
       </div>
 
@@ -1608,6 +1662,10 @@ async function driveOpenFile(f) {
     updateEditorTitle(f.name);
     closeDrivePanel();
     render();
+    // Verifica se existe roteiro TTS para este mapa
+    if (typeof ttsCheckRoteiro === 'function' && currentFolderId) {
+      ttsCheckRoteiro(f, currentFolderId);
+    }
   } catch(e) {
     showToast('Erro ao abrir arquivo.');
   }
@@ -3142,6 +3200,142 @@ loadSharedMap();
       document.body.classList.toggle('focus-mode');
       setTimeout(() => { if (typeof fitMap === 'function') fitMap(); }, 150);
     }
+  </script>
+
+  <script>
+  /* ─────────────────────────────────────────────────────
+     TTS — Roteiro via Web Speech API
+  ───────────────────────────────────────────────────── */
+  let _ttsUtterance  = null;
+  let _ttsText       = null;
+  let _ttsState      = 'idle';    // idle | playing | paused
+  let _ttsCharOffset = 0;
+  let _ttsTotal      = 0;
+
+  // Monta o nome do arquivo TXT correspondente ao .md aberto
+  function ttsRoteiroName(mdName) {
+    // Remove extensão .md
+    let base = mdName.replace(/\.md$/i, '');
+    // "Mapa Mental" → "Roteiro"
+    base = base.replace(/Mapa Mental/gi, 'Roteiro');
+    return base + '.txt';
+  }
+
+  // Chamado ao abrir um arquivo .md — busca o roteiro na mesma pasta
+  async function ttsCheckRoteiro(mdFile, folderId) {
+    const btn = document.getElementById('btn-tts');
+    btn.classList.remove('tts-visible');
+    ttsStop();
+    _ttsText = null;
+
+    if (!mdFile || !folderId || folderId === 'home') return;
+    const roteiroName = ttsRoteiroName(mdFile.name);
+
+    try {
+      const res = await gapi.client.drive.files.list({
+        q: `'${folderId}' in parents and name = '${roteiroName.replace(/'/g,"\\'").replace(/\.txt$/,"")}.txt' and trashed=false`,
+        fields: 'files(id,name)',
+        pageSize: 1,
+      });
+      const files = res.result.files || [];
+      if (files.length === 0) return;
+
+      // Baixa o conteúdo do roteiro
+      const r = await gapi.client.drive.files.get({ fileId: files[0].id, alt: 'media' });
+      _ttsText = r.body || '';
+      if (_ttsText.trim()) {
+        btn.classList.add('tts-visible');
+        ttsSetState('idle');
+      }
+    } catch(e) {
+      console.warn('[TTS] Erro ao buscar roteiro:', e);
+    }
+  }
+
+  function ttsSetState(state) {
+    _ttsState = state;
+    const btn  = document.getElementById('btn-tts');
+    const eq   = document.getElementById('tts-eq');
+    const icon = document.getElementById('tts-icon');
+    btn.classList.remove('tts-playing', 'tts-paused');
+    if (state === 'playing') {
+      btn.classList.add('tts-playing');
+      btn.title = 'Pausar roteiro';
+      eq.style.display   = 'inline-flex';
+      icon.style.display = 'none';
+    } else if (state === 'paused') {
+      btn.classList.add('tts-paused');
+      btn.title = 'Continuar roteiro';
+      eq.style.display   = 'none';
+      icon.style.display = 'inline-block';
+    } else {
+      btn.title = 'Ouvir roteiro';
+      eq.style.display   = 'none';
+      icon.style.display = 'inline-block';
+      document.getElementById('btn-tts-progress').style.width = '0%';
+    }
+  }
+
+  function ttsToggle() {
+    if (!_ttsText) return;
+    if (_ttsState === 'idle')    { ttsPlay(); return; }
+    if (_ttsState === 'playing') { ttsPause(); return; }
+    if (_ttsState === 'paused') { ttsResume(); return; }
+  }
+
+  function ttsPlay() {
+    if (!('speechSynthesis' in window)) { toast('TTS não suportado neste navegador.'); return; }
+    window.speechSynthesis.cancel();
+    _ttsCharOffset = 0;
+    _ttsTotal = _ttsText.length;
+    const utt = new SpeechSynthesisUtterance(_ttsText);
+    utt.lang  = 'pt-BR';
+    utt.rate  = 1.05;
+    utt.pitch = 1;
+    // Seleciona voz PT-BR se disponível
+    const voices = window.speechSynthesis.getVoices();
+    const ptVoice = voices.find(v => v.lang.startsWith('pt') && v.lang.includes('BR'))
+                 || voices.find(v => v.lang.startsWith('pt'));
+    if (ptVoice) utt.voice = ptVoice;
+
+    utt.onboundary = (e) => {
+      if (e.name === 'word') {
+        _ttsCharOffset = e.charIndex;
+        if (_ttsTotal > 0) {
+          document.getElementById('btn-tts-progress').style.width = Math.min(100, (_ttsCharOffset / _ttsTotal) * 100) + '%';
+        }
+      }
+    };
+    utt.onend  = () => ttsSetState('idle');
+    utt.onerror = (e) => { if (e.error !== 'interrupted' && e.error !== 'canceled') ttsSetState('idle'); };
+    _ttsUtterance = utt;
+    window.speechSynthesis.speak(utt);
+    ttsSetState('playing');
+  }
+
+  function ttsPause() {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
+      ttsSetState('paused');
+    }
+  }
+
+  function ttsResume() {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      ttsSetState('playing');
+    }
+  }
+
+  function ttsStop() {
+    window.speechSynthesis?.cancel();
+    _ttsUtterance = null;
+    ttsSetState('idle');
+  }
+
+  // Garante que as vozes sejam carregadas (necessário no Chrome)
+  window.speechSynthesis?.getVoices();
+  window.speechSynthesis?.addEventListener('voiceschanged', () => {});
   </script>
 </body>
 </html>
