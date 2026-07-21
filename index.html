@@ -2137,8 +2137,9 @@ function openDrivePicker() {
   const token = gapi.client.getToken()?.access_token;
   if (!token) { showToast('Erro de token. Faça login novamente.'); return; }
 
-  // Configura a visualização para mostrar todos os arquivos e pastas
+  // Configura a visualização para mostrar todos os arquivos e pastas a partir da raiz (estruturado)
   const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
+    .setParent('root')
     .setMimeTypes('text/markdown,text/plain,application/octet-stream,application/vnd.google-apps.folder')
     .setIncludeFolders(true)
     .setSelectFolderEnabled(true);
