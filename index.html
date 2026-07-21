@@ -2496,6 +2496,14 @@ function preprocessMD(md) {
   // 1. Remove marcadores markdown globais
   md = md.replace(/^```[a-z]*\n/gi, '').replace(/\n```$/g, '');
 
+  // Corrige links markdown com espaços (ex: [Texto](01 - Link com Espaços.md))
+  md = md.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+    if (!url.startsWith('http') && url.includes(' ')) {
+      return `[${text}](${url.replace(/ /g, '%20')})`;
+    }
+    return match;
+  });
+
   // NOVO: Converte links Obsidian [[Nome do Mapa]] ou [[Nome do Mapa|Texto Alternativo]]
   md = md.replace(/\[\[([^\]\|]+)(?:\|([^\]]+))?\]\]/g, (match, target, alias) => {
     let linkText = alias || target;
@@ -3397,15 +3405,27 @@ loadSharedMap();
     const roteiroName = ttsRoteiroName(mdFile.name);
 
     try {
+      // Busca todos os roteiros da pasta para fazer match tolerante (ignorar acentos e camelCase)
       const res = await gapi.client.drive.files.list({
-        q: `'${folderId}' in parents and name = '${roteiroName.replace(/'/g,"\\'").replace(/\.txt$/,"")}.txt' and trashed=false`,
+        q: `'${folderId}' in parents and mimeType = 'text/plain' and trashed=false`,
         fields: 'files(id,name)',
-        pageSize: 1,
+        pageSize: 1000,
       });
       const files = res.result.files || [];
       if (files.length === 0) return;
 
-      const r = await gapi.client.drive.files.get({ fileId: files[0].id, alt: 'media' });
+      const normalize = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      const expected = normalize(roteiroName);
+      
+      // Tenta match exato primeiro, depois tenta pelo prefixo (ex: "01.01 - roteiro")
+      let match = files.find(f => normalize(f.name) === expected);
+      if (!match) {
+        const prefix = expected.split('-').slice(0,2).join('-').trim(); // Pega "01.01 - roteiro"
+        match = files.find(f => normalize(f.name).startsWith(prefix));
+      }
+      if (!match) return;
+
+      const r = await gapi.client.drive.files.get({ fileId: match.id, alt: 'media' });
       _ttsText = r.body || '';
       if (_ttsText.trim()) {
         btn.classList.add('tts-visible');
