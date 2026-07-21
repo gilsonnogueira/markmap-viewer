@@ -1707,13 +1707,22 @@ async function driveListFiles(folderId) {
 
   // NAVEGAÇÃO NORMAL DE PASTA
   try {
-    const res = await gapi.client.drive.files.list({
-      q: `'${folderId}' in parents and trashed=false`,
-      fields: 'files(id,name,mimeType)',
-      orderBy: 'folder,name',
-    });
+    let allFiles = [];
+    let pageToken = null;
+    do {
+      const res = await gapi.client.drive.files.list({
+        q: `'${folderId}' in parents and trashed=false`,
+        fields: 'nextPageToken, files(id,name,mimeType)',
+        orderBy: 'folder,name',
+        pageSize: 1000,
+        pageToken: pageToken
+      });
+      allFiles = allFiles.concat(res.result.files || []);
+      pageToken = res.result.nextPageToken;
+    } while (pageToken);
+
     // Na lista visual, mostrar apenas pastas e arquivos .md (ocultar os .txt de roteiro)
-    const displayFiles = (res.result.files || []).filter(f => 
+    const displayFiles = allFiles.filter(f => 
       f.mimeType === 'application/vnd.google-apps.folder' || f.name.toLowerCase().endsWith('.md')
     );
     
