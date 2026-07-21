@@ -953,6 +953,104 @@
     #drive-overlay.open { display: block; }
 
     /* ═══════════════════════════════════════════════════════
+       TTS SETTINGS PANEL
+    ═══════════════════════════════════════════════════════ */
+    #tts-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 300px;
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+      box-shadow: -4px 0 20px rgba(0,0,0,.3);
+    }
+    #tts-panel.open { transform: translateX(0); }
+    #tts-overlay {
+      position: fixed; inset: 0;
+      z-index: 99;
+      display: none;
+    }
+    #tts-overlay.open { display: block; }
+    .tts-panel-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tts-panel-title {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 600; font-size: 13px;
+    }
+    .tts-section {
+      padding: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .tts-section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    /* Speed slider */
+    .tts-speed-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tts-speed-val {
+      font-size: 13px; font-weight: 600; min-width: 32px;
+      text-align: right; color: var(--accent);
+    }
+    input[type=range].tts-slider {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; border-radius: 2px;
+      background: var(--bg3);
+      outline: none; cursor: pointer;
+    }
+    input[type=range].tts-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 14px; height: 14px;
+      border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 6px var(--accent-dim);
+    }
+    /* Language groups */
+    .tts-lang-group {
+      margin-bottom: 10px;
+    }
+    .tts-lang-group-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .5px;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 5px; padding: 2px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .tts-voice-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; border-radius: var(--r);
+      cursor: pointer; font-size: 12px;
+      transition: background .1s;
+    }
+    .tts-voice-item:hover { background: var(--bg3); }
+    .tts-voice-item.selected {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .tts-voice-item input[type=radio] { accent-color: var(--accent); flex-shrink: 0; }
+    .tts-voice-local-badge {
+      font-size: 9px; padding: 1px 5px;
+      background: color-mix(in srgb, var(--success) 15%, transparent);
+      color: var(--success); border-radius: 10px; margin-left: auto;
+      flex-shrink: 0;
+    }
+    .tts-voices-scroll {
+      overflow-y: auto; max-height: calc(100vh - 280px);
+      padding-right: 4px;
+    }
+    .tts-voices-scroll::-webkit-scrollbar { width: 4px; }
+    .tts-voices-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .tts-no-voices { font-size: 12px; color: var(--text-muted); padding: 12px 0; text-align: center; }
+
+    /* ═══════════════════════════════════════════════════════
        RESPONSIVE
     ═══════════════════════════════════════════════════════ */
     @media (max-width: 700px) {
@@ -1189,6 +1287,9 @@
             <svg id="tts-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
             <div id="btn-tts-progress"></div>
           </button>
+          <button class="btn btn-icon" id="btn-tts-settings" onclick="openTtsPanel()" title="Configurações de voz" style="display:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
         </div>
       </div>
 
@@ -1217,6 +1318,43 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     TTS SETTINGS PANEL
+═════════════════════════════════════════════════════════ -->
+<div id="tts-overlay" onclick="closeTtsPanel()"></div>
+<div id="tts-panel">
+  <div class="tts-panel-hdr">
+    <div class="tts-panel-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      Configurações de Voz
+    </div>
+    <button class="btn btn-icon" onclick="closeTtsPanel()" title="Fechar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- Velocidade -->
+  <div class="tts-section">
+    <div class="tts-section-label">Velocidade de leitura</div>
+    <div class="tts-speed-row">
+      <span style="font-size:11px;color:var(--text-muted)">0.5×</span>
+      <input type="range" class="tts-slider" id="tts-speed-slider"
+        min="0.5" max="2" step="0.05" value="1.05"
+        oninput="ttsSpeedChange(this.value)">
+      <span style="font-size:11px;color:var(--text-muted)">2×</span>
+      <span class="tts-speed-val" id="tts-speed-val">1.05×</span>
+    </div>
+  </div>
+
+  <!-- Vozes -->
+  <div class="tts-section" style="flex:1; overflow:hidden; display:flex; flex-direction:column;">
+    <div class="tts-section-label">Voz do narrador</div>
+    <div class="tts-voices-scroll" id="tts-voices-list">
+      <div class="tts-no-voices">Carregando vozes…</div>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════
      DRIVE PANEL
@@ -3211,20 +3349,22 @@ loadSharedMap();
   let _ttsState      = 'idle';    // idle | playing | paused
   let _ttsCharOffset = 0;
   let _ttsTotal      = 0;
+  let _ttsRate       = parseFloat(localStorage.getItem('tts_rate') || '1.05');
+  let _ttsVoiceName  = localStorage.getItem('tts_voice') || '';
 
-  // Monta o nome do arquivo TXT correspondente ao .md aberto
+  // Monta nome do arquivo TXT correspondente ao .md
   function ttsRoteiroName(mdName) {
-    // Remove extensão .md
     let base = mdName.replace(/\.md$/i, '');
-    // "Mapa Mental" → "Roteiro"
     base = base.replace(/Mapa Mental/gi, 'Roteiro');
     return base + '.txt';
   }
 
-  // Chamado ao abrir um arquivo .md — busca o roteiro na mesma pasta
+  // Busca roteiro ao abrir arquivo .md
   async function ttsCheckRoteiro(mdFile, folderId) {
-    const btn = document.getElementById('btn-tts');
+    const btn     = document.getElementById('btn-tts');
+    const btnCfg  = document.getElementById('btn-tts-settings');
     btn.classList.remove('tts-visible');
+    if (btnCfg) btnCfg.style.display = 'none';
     ttsStop();
     _ttsText = null;
 
@@ -3240,11 +3380,11 @@ loadSharedMap();
       const files = res.result.files || [];
       if (files.length === 0) return;
 
-      // Baixa o conteúdo do roteiro
       const r = await gapi.client.drive.files.get({ fileId: files[0].id, alt: 'media' });
       _ttsText = r.body || '';
       if (_ttsText.trim()) {
         btn.classList.add('tts-visible');
+        if (btnCfg) btnCfg.style.display = 'inline-flex';
         ttsSetState('idle');
       }
     } catch(e) {
@@ -3252,6 +3392,7 @@ loadSharedMap();
     }
   }
 
+  // ── Estado visual do botão ──────────────────────────
   function ttsSetState(state) {
     _ttsState = state;
     const btn  = document.getElementById('btn-tts');
@@ -3276,11 +3417,12 @@ loadSharedMap();
     }
   }
 
+  // ── Play / Pause / Resume / Stop ───────────────────
   function ttsToggle() {
     if (!_ttsText) return;
-    if (_ttsState === 'idle')    { ttsPlay(); return; }
-    if (_ttsState === 'playing') { ttsPause(); return; }
-    if (_ttsState === 'paused') { ttsResume(); return; }
+    if (_ttsState === 'idle')    { ttsPlay();   return; }
+    if (_ttsState === 'playing') { ttsPause();  return; }
+    if (_ttsState === 'paused')  { ttsResume(); return; }
   }
 
   function ttsPlay() {
@@ -3288,25 +3430,33 @@ loadSharedMap();
     window.speechSynthesis.cancel();
     _ttsCharOffset = 0;
     _ttsTotal = _ttsText.length;
+
     const utt = new SpeechSynthesisUtterance(_ttsText);
     utt.lang  = 'pt-BR';
-    utt.rate  = 1.05;
+    utt.rate  = _ttsRate;
     utt.pitch = 1;
-    // Seleciona voz PT-BR se disponível
+
+    // Usa a voz selecionada; se não houver, tenta PT-BR
     const voices = window.speechSynthesis.getVoices();
-    const ptVoice = voices.find(v => v.lang.startsWith('pt') && v.lang.includes('BR'))
+    let chosenVoice = _ttsVoiceName
+      ? voices.find(v => v.name === _ttsVoiceName)
+      : null;
+    if (!chosenVoice) {
+      chosenVoice = voices.find(v => v.lang.startsWith('pt') && v.lang.includes('BR'))
                  || voices.find(v => v.lang.startsWith('pt'));
-    if (ptVoice) utt.voice = ptVoice;
+    }
+    if (chosenVoice) utt.voice = chosenVoice;
 
     utt.onboundary = (e) => {
       if (e.name === 'word') {
         _ttsCharOffset = e.charIndex;
         if (_ttsTotal > 0) {
-          document.getElementById('btn-tts-progress').style.width = Math.min(100, (_ttsCharOffset / _ttsTotal) * 100) + '%';
+          document.getElementById('btn-tts-progress').style.width =
+            Math.min(100, (_ttsCharOffset / _ttsTotal) * 100) + '%';
         }
       }
     };
-    utt.onend  = () => ttsSetState('idle');
+    utt.onend   = () => ttsSetState('idle');
     utt.onerror = (e) => { if (e.error !== 'interrupted' && e.error !== 'canceled') ttsSetState('idle'); };
     _ttsUtterance = utt;
     window.speechSynthesis.speak(utt);
@@ -3333,9 +3483,118 @@ loadSharedMap();
     ttsSetState('idle');
   }
 
-  // Garante que as vozes sejam carregadas (necessário no Chrome)
-  window.speechSynthesis?.getVoices();
-  window.speechSynthesis?.addEventListener('voiceschanged', () => {});
+  // ── Painel de configurações ─────────────────────────
+  function openTtsPanel() {
+    document.getElementById('tts-panel').classList.add('open');
+    document.getElementById('tts-overlay').classList.add('open');
+    ttsPopulateVoices();
+    // Sincroniza slider
+    const slider = document.getElementById('tts-speed-slider');
+    if (slider) { slider.value = _ttsRate; }
+    document.getElementById('tts-speed-val').textContent = _ttsRate.toFixed(2) + '×';
+  }
+
+  function closeTtsPanel() {
+    document.getElementById('tts-panel').classList.remove('open');
+    document.getElementById('tts-overlay').classList.remove('open');
+  }
+
+  function ttsSpeedChange(val) {
+    _ttsRate = parseFloat(val);
+    localStorage.setItem('tts_rate', _ttsRate);
+    document.getElementById('tts-speed-val').textContent = _ttsRate.toFixed(2) + '×';
+  }
+
+  // Popula a lista de vozes agrupada por idioma
+  function ttsPopulateVoices() {
+    const container = document.getElementById('tts-voices-list');
+    const voices    = window.speechSynthesis.getVoices();
+
+    if (!voices.length) {
+      container.innerHTML = '<div class="tts-no-voices">Nenhuma voz encontrada.<br>Tente um navegador baseado em Chromium.</div>';
+      return;
+    }
+
+    // Agrupa por idioma (ex: "pt-BR", "en-US")
+    const LANG_NAMES = {
+      'pt': 'Português', 'pt-BR': 'Português (Brasil)', 'pt-PT': 'Português (Portugal)',
+      'en': 'English', 'en-US': 'English (US)', 'en-GB': 'English (UK)',
+      'es': 'Español', 'fr': 'Français', 'de': 'Deutsch',
+      'it': 'Italiano', 'ja': '日本語', 'zh': '中文', 'ko': '한국어',
+    };
+    const groups = {};
+    voices.forEach(v => {
+      const lang = v.lang || 'Outros';
+      if (!groups[lang]) groups[lang] = [];
+      groups[lang].push(v);
+    });
+
+    // Ordena: PT primeiro, depois alfabético
+    const sorted = Object.keys(groups).sort((a, b) => {
+      const aPt = a.startsWith('pt');
+      const bPt = b.startsWith('pt');
+      if (aPt && !bPt) return -1;
+      if (!aPt && bPt) return  1;
+      return a.localeCompare(b);
+    });
+
+    container.innerHTML = '';
+    sorted.forEach(lang => {
+      const grp = document.createElement('div');
+      grp.className = 'tts-lang-group';
+
+      const lbl = document.createElement('div');
+      lbl.className = 'tts-lang-group-label';
+      lbl.textContent = LANG_NAMES[lang] || lang;
+      grp.appendChild(lbl);
+
+      groups[lang].forEach(v => {
+        const item = document.createElement('label');
+        item.className = 'tts-voice-item' + (v.name === _ttsVoiceName ? ' selected' : '');
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'tts-voice';
+        radio.value = v.name;
+        radio.checked = v.name === _ttsVoiceName;
+        radio.onchange = () => {
+          _ttsVoiceName = v.name;
+          localStorage.setItem('tts_voice', v.name);
+          container.querySelectorAll('.tts-voice-item').forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+        };
+
+        const name = document.createElement('span');
+        name.textContent = v.name;
+
+        item.appendChild(radio);
+        item.appendChild(name);
+
+        if (v.localService) {
+          const badge = document.createElement('span');
+          badge.className = 'tts-voice-local-badge';
+          badge.textContent = 'local';
+          item.appendChild(badge);
+        }
+        grp.appendChild(item);
+      });
+
+      container.appendChild(grp);
+    });
+  }
+
+  // Carrega vozes quando disponíveis (Chrome exige evento)
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+      // Inicializa slider com valor salvo
+      const slider = document.getElementById('tts-speed-slider');
+      if (slider) {
+        slider.value = _ttsRate;
+        document.getElementById('tts-speed-val').textContent = _ttsRate.toFixed(2) + '×';
+      }
+    });
+  }
   </script>
 </body>
 </html>
