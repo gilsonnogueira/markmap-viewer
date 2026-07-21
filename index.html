@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
   <title>Markmap Viewer — Mapas Mentais Interativos</title>
   <meta name="description" content="Editor e visualizador de mapas mentais Markmap integrado ao Google Drive. Crie, organize, revise e compartilhe seus mapas em alta definição.">
@@ -111,6 +111,9 @@
       overflow: hidden;
       font-size: 13px;
       line-height: 1.5;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     /* Focus Mode */
@@ -450,6 +453,8 @@
       tab-size: 2;
       overflow-y: auto;
       caret-color: var(--accent);
+      -webkit-user-select: auto;
+      user-select: auto;
     }
     #editor::placeholder { color: var(--text-subtle); }
     #editor::-webkit-scrollbar { width: 6px; }
