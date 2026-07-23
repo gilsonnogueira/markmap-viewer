@@ -11,6 +11,7 @@
 ---
 
 ## 📸 गैलरी / स्क्रीनशॉट
+
 | Editor (Dark Mode) | Editor (Light Mode) | Editor (E-ink Mode) |
 | :---: | :---: | :---: |
 | ![Editor Dark](assets/editor-dark.png) | ![Editor Light](assets/editor-light.png) | ![Editor E-ink](assets/editor-e-ink.png) |
@@ -25,25 +26,6 @@
 
 ---
 
-: | :---: | :---: |
-| ![Editor Dark](assets/editor-dark.png) | ![Editor Light](assets/editor-light.png) | ![Editor E-ink](assets/editor-e-ink.png) |
-
-| Vitrine / Gallery | Meu Drive / My Drive | Modo Foco / Focus Mode |
-| :---: | :---: | :---: |
-| ![Vitrine](assets/vitrine.png) | ![Drive](assets/meu-drive.png) | ![Foco](assets/focus-mode.png) |
-
-| Exportação / Export | Text-to-Speech (TTS) |
-| :---: | :---: |
-| ![Export](assets/export.png) | ![TTS](assets/tts.png) |
-
----: | :---: |
-| ![Vitrine](assets/vitrine.png) | ![Foco](assets/focus-mode.png) |
-
-| निर्यात विकल्प |
-| :---: |
-| ![Export](assets/export.png) |
-
----
 
 ## ✨ नए अपडेट (जुलाई 2026)
 - **नेटिव एक्सपोर्ट सिस्टम:** अब आप सीधे ब्राउज़र से सिंगल माइंड मैप या पूरे फोल्डर को **PDF, PNG, HTML और SVG** फॉर्मेट में एक्सपोर्ट कर सकते हैं। यह थीम (डार्क, लाइट, ई-इंक) और पारदर्शी बैकग्राउंड को सपोर्ट करता है।

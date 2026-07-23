@@ -11,6 +11,7 @@
 ---
 
 ## 📸 갤러리 / 스크린샷
+
 | Editor (Dark Mode) | Editor (Light Mode) | Editor (E-ink Mode) |
 | :---: | :---: | :---: |
 | ![Editor Dark](assets/editor-dark.png) | ![Editor Light](assets/editor-light.png) | ![Editor E-ink](assets/editor-e-ink.png) |
@@ -25,25 +26,6 @@
 
 ---
 
-: | :---: | :---: |
-| ![Editor Dark](assets/editor-dark.png) | ![Editor Light](assets/editor-light.png) | ![Editor E-ink](assets/editor-e-ink.png) |
-
-| Vitrine / Gallery | Meu Drive / My Drive | Modo Foco / Focus Mode |
-| :---: | :---: | :---: |
-| ![Vitrine](assets/vitrine.png) | ![Drive](assets/meu-drive.png) | ![Foco](assets/focus-mode.png) |
-
-| Exportação / Export | Text-to-Speech (TTS) |
-| :---: | :---: |
-| ![Export](assets/export.png) | ![TTS](assets/tts.png) |
-
----: | :---: |
-| ![Vitrine](assets/vitrine.png) | ![Foco](assets/focus-mode.png) |
-
-| 내보내기 옵션 |
-| :---: |
-| ![Export](assets/export.png) |
-
----
 
 ## ✨ 최신 업데이트 (2026년 7월)
 - **자체 내보내기 시스템:** 이제 단일 마인드맵이나 전체 폴더를 브라우저에서 직접 **PDF, PNG, HTML, SVG** 형식으로 내보낼 수 있습니다. 테마(다크, 라이트, E-ink) 및 투명 배경을 지원합니다.
