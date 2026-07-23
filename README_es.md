@@ -12,6 +12,23 @@ Ideal para estudiantes y profesionales que necesitan organizar temas complejos, 
 
 ---
 
+
+## 📸 Showcase
+
+| Editor (Dark Mode) | Editor (Light Mode) |
+| :---: | :---: |
+| ![Editor Dark](assets/editor-dark.png) | ![Editor Light](assets/editor-light.png) |
+
+| Vitrine / Gallery | Modo Foco / Focus Mode |
+| :---: | :---: |
+| ![Vitrine](assets/vitrine.png) | ![Foco](assets/focus-mode.png) |
+
+| Exportação / Export Options |
+| :---: |
+| ![Export](assets/export.png) |
+
+---
+
 ## ✨ Características Principales
 
 ### 1. Editor y Renderizador en Tiempo Real

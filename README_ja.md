@@ -12,6 +12,23 @@
 
 ---
 
+
+## 📸 Showcase
+
+| Editor (Dark Mode) | Editor (Light Mode) |
+| :---: | :---: |
+| ![Editor Dark](assets/editor-dark.png) | ![Editor Light](assets/editor-light.png) |
+
+| Vitrine / Gallery | Modo Foco / Focus Mode |
+| :---: | :---: |
+| ![Vitrine](assets/vitrine.png) | ![Foco](assets/focus-mode.png) |
+
+| Exportação / Export Options |
+| :---: |
+| ![Export](assets/export.png) |
+
+---
+
 ## ✨ 主な機能
 
 ### 1. リアルタイムエディタとレンダラー
