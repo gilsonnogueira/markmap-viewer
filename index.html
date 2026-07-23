@@ -41,6 +41,12 @@
     });
   </script>
 
+  <!-- Bibliotecas de Exportação -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+
   <style>
     /* ═══════════════════════════════════════════════════════
        TOKENS
@@ -1115,6 +1121,15 @@
   </div>
 
   <div class="header-right">
+    <!-- Export Button -->
+    <button class="btn btn-primary" id="btn-export" onclick="openExportModal()" style="gap: 6px; background: var(--accent); border-color: var(--accent); color: #0d1117;" title="Exportar Mapa(s)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Exportar
+    </button>
+    <div class="hdr-sep"></div>
+
     <!-- Donate Button -->
     <button class="btn btn-primary" id="btn-donate" onclick="window.open('https://livepix.gg/gilsonnogueira', '_blank')" style="gap: 6px; background: #FF5E5B; border-color: #FF5E5B; color: white;" title="Apoie este projeto anonimamente!">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1416,6 +1431,54 @@
     <div class="modal-btns">
       <button class="btn" onclick="closeDriveModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmDriveModal()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Exportação -->
+<div id="export-modal-overlay" onclick="if(event.target===this)closeExportModal()">
+  <div id="export-modal">
+    <h3>Opções de Exportação</h3>
+    
+    <div class="export-option-group">
+      <label>Escopo</label>
+      <select id="export-scope" class="export-select">
+        <option value="current">Apenas o mapa atual em tela</option>
+        <option value="folder">Todos os mapas da pasta atual (Lote)</option>
+      </select>
+    </div>
+
+    <div class="export-option-group">
+      <label>Formato</label>
+      <select id="export-format" class="export-select" onchange="updateExportOptions()">
+        <option value="pdf">PDF (Alta Resolução)</option>
+        <option value="png">PNG (Imagem)</option>
+        <option value="html">HTML (Interativo)</option>
+        <option value="svg">SVG (Vetor)</option>
+      </select>
+    </div>
+
+    <div class="export-option-group">
+      <label>Tema Visual</label>
+      <select id="export-theme" class="export-select">
+        <option value="dark">Dark (Escuro)</option>
+        <option value="light">Normal (Claro)</option>
+        <option value="eink">E-ink (Claro / Alto Contraste)</option>
+      </select>
+    </div>
+
+    <div class="export-option-group" id="export-bg-group" style="display: none;">
+      <label class="export-checkbox">
+        <input type="checkbox" id="export-bg-transparent">
+        Fundo transparente
+      </label>
+    </div>
+
+    <div id="export-progress">Preparando exportação...</div>
+
+    <div class="modal-btns" style="margin-top: 8px;">
+      <button class="btn" onclick="closeExportModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirm-export" onclick="confirmExport()">Exportar</button>
     </div>
   </div>
 </div>
@@ -3418,10 +3481,10 @@ loadSharedMap();
       const expected = normalize(roteiroName);
       
       // Tenta match exato primeiro, depois tenta pelo prefixo (ex: "01.01 - roteiro")
-      let match = files.find(f => normalize(f.name) === expected);
+      let match = files.find(f => normalize(f.name) === expected && f.name.toLowerCase().endsWith('.txt'));
       if (!match) {
         const prefix = expected.split('-').slice(0,2).join('-').trim(); // Pega "01.01 - roteiro"
-        match = files.find(f => normalize(f.name).startsWith(prefix));
+        match = files.find(f => normalize(f.name).startsWith(prefix) && f.name.toLowerCase().endsWith('.txt'));
       }
       if (!match) return;
 
@@ -3628,17 +3691,294 @@ loadSharedMap();
     });
   }
 
-  // Carrega vozes quando disponíveis (Chrome exige evento)
-  if (window.speechSynthesis) {
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.addEventListener('voiceschanged', () => {
-      // Inicializa slider com valor salvo
-      const slider = document.getElementById('tts-speed-slider');
-      if (slider) {
-        slider.value = _ttsRate;
-        document.getElementById('tts-speed-val').textContent = _ttsRate.toFixed(2) + '×';
-      }
+  // ═══════════════════════════════════════════════════════
+  // EXPORTADOR COMPLETO NATIVO
+  // ═══════════════════════════════════════════════════════
+
+  function openExportModal() {
+    document.getElementById('export-modal-overlay').classList.add('open');
+    updateExportOptions();
+  }
+
+  function closeExportModal() {
+    document.getElementById('export-modal-overlay').classList.remove('open');
+    document.getElementById('export-progress').style.display = 'none';
+  }
+
+  function updateExportOptions() {
+    const fmt = document.getElementById('export-format').value;
+    const bgGroup = document.getElementById('export-bg-group');
+    if (fmt === 'png' || fmt === 'svg') {
+      bgGroup.style.display = 'block';
+    } else {
+      bgGroup.style.display = 'none';
+    }
+  }
+
+  function getThemeCSS(theme) {
+    if (theme === 'eink') {
+      return `
+        body, body svg, svg { background-color: #FFFFFF !important; }
+        * { color: #000000 !important; stroke: #000000 !important; }
+        path, line, .markmap-link { stroke: #000000 !important; stroke-width: 2px !important; }
+        circle { stroke: #000000 !important; fill: #FFFFFF !important; stroke-width: 2px !important; }
+        .markmap foreignObject strong, .markmap foreignObject b { color: #000000 !important; font-weight: 900 !important; }
+        .markmap foreignObject mark { background-color: #DDDDDD !important; color: #000000 !important; }
+        blockquote { margin: 4px 0; padding: 12px; border-radius: 0; border: 2px solid #000000; background-color: #FFFFFF; font-size: 0.9em; color: #000000 !important; box-shadow: none !important; }
+        .callout-title { font-weight: bold; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 1.05em; color: #000000 !important; }
+        .markmap foreignObject table { border-collapse: collapse !important; width: 100% !important; border: 2px solid #000000 !important; }
+        .markmap foreignObject th, .markmap foreignObject td { padding: 4px 8px !important; border: 1px solid #000000 !important; white-space: normal !important; word-wrap: break-word !important; }
+      `;
+    } else if (theme === 'light') {
+      return `
+        body, body svg, svg { background-color: #ffffff !important; }
+        * { color: #24292f; }
+        blockquote { margin: 4px 0; padding: 12px; border-radius: 6px; border-left: 4px solid #e5a00d; background-color: rgba(229,160,13,0.15); font-size: 0.9em; }
+        .callout-title { font-weight: bold; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 1.05em; }
+        .markmap foreignObject table { border-collapse: collapse !important; width: 100% !important; }
+        .markmap foreignObject th, .markmap foreignObject td { padding: 4px 8px !important; border: 1px solid #ddd !important; white-space: normal !important; word-wrap: break-word !important; }
+      `;
+    } else {
+      // Dark
+      return `
+        body, body svg, svg { background-color: #1e1e1e !important; }
+        .markmap foreignObject *, .theme-dark .markmap foreignObject * { color: #e2e8f0; }
+        .markmap foreignObject strong, .markmap foreignObject b { color: #58a6ff !important; }
+        .markmap foreignObject mark { background-color: #ffd859 !important; color: #111111 !important; }
+        blockquote { margin: 4px 0; padding: 12px; border-radius: 6px; border-left: 4px solid #e5a00d; background-color: rgba(229,160,13,0.15); font-size: 0.9em; color: #d4d4d4 !important; }
+        .callout-title { font-weight: bold; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 1.05em; }
+        .markmap foreignObject table { border-collapse: collapse !important; width: 100% !important; }
+        .markmap foreignObject th, .markmap foreignObject td { padding: 4px 8px !important; border: 1px solid #555 !important; white-space: normal !important; word-wrap: break-word !important; }
+      `;
+    }
+  }
+
+  async function renderMapToSVG(mdText, theme, transparent = false) {
+    const hiddenContainer = document.createElement('div');
+    hiddenContainer.style.position = 'absolute';
+    hiddenContainer.style.left = '-9999px';
+    hiddenContainer.style.top = '-9999px';
+    hiddenContainer.style.width = '2000px';
+    hiddenContainer.style.height = '2000px';
+    document.body.appendChild(hiddenContainer);
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    hiddenContainer.appendChild(svg);
+
+    const processedMD = preprocessMD(mdText);
+    const { root } = markmapTransformer.transform(processedMD);
+    const mm = window.markmap.Markmap.create(svg, {
+      duration: 0,
+      initialExpandLevel: 999,
+      colorFreezeLevel: theme === 'eink' ? 0 : 2
+    }, root);
+
+    await new Promise(r => setTimeout(r, 300));
+    mm.fit();
+    await new Promise(r => setTimeout(r, 100));
+
+    // Aplica estilos visuais do tema
+    const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    styleEl.textContent = getThemeCSS(theme);
+    svg.insertBefore(styleEl, svg.firstChild);
+
+    if (theme === 'eink') {
+      svg.querySelectorAll('path, line').forEach(el => {
+        el.setAttribute('stroke', '#000000');
+        el.style.setProperty('stroke', '#000000', 'important');
+      });
+      svg.querySelectorAll('circle').forEach(el => {
+        el.setAttribute('stroke', '#000000');
+        el.setAttribute('fill', '#ffffff');
+        el.style.setProperty('stroke', '#000000', 'important');
+        el.style.setProperty('fill', '#ffffff', 'important');
+      });
+      svg.querySelectorAll('*').forEach(el => {
+        if (el.style && el.style.color) el.style.setProperty('color', '#000000', 'important');
+      });
+    }
+
+    const g = svg.querySelector('g');
+    const bbox = g ? g.getBBox() : { x: 0, y: 0, width: 800, height: 600 };
+    const pad = 40;
+    const w = Math.ceil(bbox.width + pad * 2);
+    const h = Math.ceil(bbox.height + pad * 2);
+
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+    if (g) {
+      g.setAttribute('transform', `translate(${pad - bbox.x}, ${pad - bbox.y}) scale(1)`);
+    }
+
+    if (!transparent) {
+      const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bgRect.setAttribute('width', '100%');
+      bgRect.setAttribute('height', '100%');
+      bgRect.setAttribute('fill', theme === 'dark' ? '#1e1e1e' : '#ffffff');
+      svg.insertBefore(bgRect, svg.firstChild);
+    }
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    document.body.removeChild(hiddenContainer);
+
+    return { svgData, width: w, height: h };
+  }
+
+  async function svgToCanvas(svgData, width, height) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width * 2; // High DPI
+        canvas.height = height * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        resolve(canvas);
+      };
+      img.src = url;
     });
+  }
+
+  function downloadFile(content, fileName, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  async function confirmExport() {
+    const scope = document.getElementById('export-scope').value;
+    const format = document.getElementById('export-format').value;
+    const theme = document.getElementById('export-theme').value;
+    const transparent = document.getElementById('export-bg-transparent').checked;
+    const progress = document.getElementById('export-progress');
+    const btnConfirm = document.getElementById('btn-confirm-export');
+
+    btnConfirm.disabled = true;
+    progress.style.display = 'block';
+
+    try {
+      if (scope === 'current') {
+        progress.textContent = 'Gerando exportação...';
+        const title = currentMapTitle || 'Mapa_Mental';
+        const mdText = editor.getValue();
+        await exportSingleMap(mdText, title, format, theme, transparent);
+      } else {
+        if (!currentMapFiles || currentMapFiles.length === 0) {
+          alert('Nenhuma pasta carregada para exportação em lote.');
+          return;
+        }
+        await exportFolderBatch(format, theme, transparent, progress);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao exportar: ' + err.message);
+    } finally {
+      btnConfirm.disabled = false;
+      closeExportModal();
+    }
+  }
+
+  async function exportSingleMap(mdText, title, format, theme, transparent) {
+    const { svgData, width, height } = await renderMapToSVG(mdText, theme, transparent);
+    const fileName = title.replace(/[\\/:*?"<>|]/g, '_');
+
+    if (format === 'svg') {
+      downloadFile(svgData, `${fileName}.svg`, 'image/svg+xml;charset=utf-8');
+    } else if (format === 'html') {
+      const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>${getThemeCSS(theme)}</style></head><body>${svgData}</body></html>`;
+      downloadFile(htmlContent, `${fileName}.html`, 'text/html;charset=utf-8');
+    } else if (format === 'png') {
+      const canvas = await svgToCanvas(svgData, width, height);
+      canvas.toBlob(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${fileName}.png`;
+        link.click();
+      }, 'image/png');
+    } else if (format === 'pdf') {
+      const canvas = await svgToCanvas(svgData, width, height);
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: width > height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [width, height]
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+      pdf.save(`${fileName}.pdf`);
+    }
+  }
+
+  async function exportFolderBatch(format, theme, transparent, progressEl) {
+    const total = currentMapFiles.length;
+    const zip = (format !== 'pdf') ? new JSZip() : null;
+    let pdf = null;
+
+    for (let i = 0; i < total; i++) {
+      const file = currentMapFiles[i];
+      progressEl.textContent = `Processando [${i + 1}/${total}]: ${file.name}...`;
+
+      let mdText = '';
+      if (file.isLocal) {
+        mdText = await file.handle.getFile().then(f => f.text());
+      } else {
+        const res = await gapi.client.drive.files.get({ fileId: file.id, alt: 'media' });
+        mdText = res.body;
+      }
+
+      const title = file.name.replace(/\.md$/i, '');
+      const cleanTitle = title.replace(/[\\/:*?"<>|]/g, '_');
+      const { svgData, width, height } = await renderMapToSVG(mdText, theme, transparent);
+
+      if (format === 'svg') {
+        zip.file(`${cleanTitle}.svg`, svgData);
+      } else if (format === 'html') {
+        const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>${getThemeCSS(theme)}</style></head><body>${svgData}</body></html>`;
+        zip.file(`${cleanTitle}.html`, htmlContent);
+      } else if (format === 'png') {
+        const canvas = await svgToCanvas(svgData, width, height);
+        const dataUrl = canvas.toDataURL('image/png').split(',')[1];
+        zip.file(`${cleanTitle}.png`, dataUrl, { base64: true });
+      } else if (format === 'pdf') {
+        const canvas = await svgToCanvas(svgData, width, height);
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        if (!pdf) {
+          pdf = new jsPDF({
+            orientation: width > height ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [width, height]
+          });
+          pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+        } else {
+          pdf.addPage([width, height], width > height ? 'landscape' : 'portrait');
+          pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+        }
+      }
+    }
+
+    progressEl.textContent = 'Finalizando arquivo...';
+
+    if (format === 'pdf') {
+      pdf.save(`Compilado_Mapas_${theme}.pdf`);
+    } else {
+      const content = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = `Mapas_Exportados_${theme}.zip`;
+      link.click();
+    }
   }
   </script>
 </body>
