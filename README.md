@@ -1,6 +1,6 @@
 # 🧠 Markmap Viewer
 
-[🇧🇷 Português](README.md) | [🇺🇸 English](README_en.md) | [🇪🇸 Español](README_es.md) | [🇨🇳 中文](README_zh.md) | [🇯🇵 日本語](README_ja.md)
+[🇧🇷 Português](README.md) | [🇺🇸 English](README_en.md) | [🇪🇸 Español](README_es.md) | [🇨🇳 中文](README_zh.md) | [🇯🇵 日本語](README_ja.md) | [🇫🇷 Français](README_fr.md) | [🇩🇪 Deutsch](README_de.md) | [🇷🇺 Русский](README_ru.md) | [🇰🇷 한국어](README_ko.md) | [🇮🇳 हिन्दी](README_hi.md)
 
 Um visualizador e editor de mapas mentais interativos baseado na biblioteca **Markmap**, desenvolvido sob medida com uma interface de alta fidelidade e persistência de dados integrada diretamente ao **Google Drive**.
 
@@ -13,7 +13,7 @@ Ideal para estudantes e profissionais que necessitam organizar tópicos complexo
 ---
 
 
-## 📸 Showcase
+## 📸 Galeria de Imagens
 
 | Editor (Dark Mode) | Editor (Light Mode) |
 | :---: | :---: |

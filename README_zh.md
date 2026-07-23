@@ -1,6 +1,6 @@
 # 🧠 Markmap Viewer
 
-[🇧🇷 Português](README.md) | [🇺🇸 English](README_en.md) | [🇪🇸 Español](README_es.md) | [🇨🇳 中文](README_zh.md) | [🇯🇵 日本語](README_ja.md)
+[🇧🇷 Português](README.md) | [🇺🇸 English](README_en.md) | [🇪🇸 Español](README_es.md) | [🇨🇳 中文](README_zh.md) | [🇯🇵 日本語](README_ja.md) | [🇫🇷 Français](README_fr.md) | [🇩🇪 Deutsch](README_de.md) | [🇷🇺 Русский](README_ru.md) | [🇰🇷 한국어](README_ko.md) | [🇮🇳 हिन्दी](README_hi.md)
 
 基于 **Markmap** 库的交互式思维导图查看器和编辑器。它提供高保真度的界面，并将数据直接持久化到 **Google Drive**。
 
@@ -13,7 +13,7 @@
 ---
 
 
-## 📸 Showcase
+## 📸 界面展示 / 截图
 
 | Editor (Dark Mode) | Editor (Light Mode) |
 | :---: | :---: |
