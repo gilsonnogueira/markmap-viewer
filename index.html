@@ -1062,6 +1062,98 @@
     .tts-no-voices { font-size: 12px; color: var(--text-muted); padding: 12px 0; text-align: center; }
 
     /* ═══════════════════════════════════════════════════════
+       EXPORT PANEL (SLIDE-OVER DIREITO)
+    ═══════════════════════════════════════════════════════ */
+    #export-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 290px;
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+      box-shadow: -4px 0 20px rgba(0,0,0,.3);
+    }
+    #export-panel.open { transform: translateX(0); }
+    #export-overlay {
+      position: fixed; inset: 0;
+      z-index: 99;
+      display: none;
+    }
+    #export-overlay.open { display: block; }
+    .export-panel-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .export-panel-title {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 600; font-size: 13px; color: var(--text);
+    }
+    .export-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .export-option-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .export-option-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .export-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: var(--r);
+      font-family: var(--font);
+      font-size: 12.5px;
+      outline: none;
+      width: 100%;
+      cursor: pointer;
+    }
+    .export-select:focus {
+      border-color: var(--accent);
+    }
+    .export-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    #export-progress {
+      font-size: 12px;
+      color: var(--accent);
+      text-align: center;
+      display: none;
+      padding: 8px;
+      background: rgba(88,166,255,0.1);
+      border-radius: var(--r);
+      border: 1px solid rgba(88,166,255,0.2);
+    }
+    .export-panel-ftr {
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════
        RESPONSIVE
     ═══════════════════════════════════════════════════════ */
     @media (max-width: 700px) {
@@ -1122,7 +1214,7 @@
 
   <div class="header-right">
     <!-- Export Button -->
-    <button class="btn btn-primary" id="btn-export" onclick="openExportModal()" style="gap: 6px; background: var(--accent); border-color: var(--accent); color: #0d1117;" title="Exportar Mapa(s)">
+    <button class="btn" id="btn-export" onclick="toggleExportPanel()" title="Exportar mapa ou pasta" style="gap: 6px;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
@@ -1435,16 +1527,29 @@
   </div>
 </div>
 
-<!-- Modal de Exportação -->
-<div id="export-modal-overlay" onclick="if(event.target===this)closeExportModal()">
-  <div id="export-modal">
-    <h3>Opções de Exportação</h3>
-    
+<!-- Overlay para fechar exportação clicando fora -->
+<div id="export-overlay" onclick="closeExportPanel()"></div>
+
+<!-- Painel de Exportação (Aba lateral direita) -->
+<div id="export-panel">
+  <div class="export-panel-hdr">
+    <div class="export-panel-title">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Exportar Mapas
+    </div>
+    <button class="btn btn-icon" onclick="closeExportPanel()" title="Fechar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="export-panel-body">
     <div class="export-option-group">
       <label>Escopo</label>
       <select id="export-scope" class="export-select">
-        <option value="current">Apenas o mapa atual em tela</option>
-        <option value="folder">Todos os mapas da pasta atual (Lote)</option>
+        <option value="current">Apenas o mapa em tela</option>
+        <option value="folder">Todos da pasta atual (Lote)</option>
       </select>
     </div>
 
@@ -1463,7 +1568,7 @@
       <select id="export-theme" class="export-select">
         <option value="dark">Dark (Escuro)</option>
         <option value="light">Normal (Claro)</option>
-        <option value="eink">E-ink (Claro / Alto Contraste)</option>
+        <option value="eink">E-ink (Alto Contraste)</option>
       </select>
     </div>
 
@@ -1475,11 +1580,12 @@
     </div>
 
     <div id="export-progress">Preparando exportação...</div>
+  </div>
 
-    <div class="modal-btns" style="margin-top: 8px;">
-      <button class="btn" onclick="closeExportModal()">Cancelar</button>
-      <button class="btn btn-primary" id="btn-confirm-export" onclick="confirmExport()">Exportar</button>
-    </div>
+  <div class="export-panel-ftr">
+    <button class="btn btn-primary" id="btn-confirm-export" onclick="confirmExport()" style="width: 100%; justify-content: center; background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 600;">
+      Baixar
+    </button>
   </div>
 </div>
 
@@ -3695,14 +3801,30 @@ loadSharedMap();
   // EXPORTADOR COMPLETO NATIVO
   // ═══════════════════════════════════════════════════════
 
-  function openExportModal() {
-    document.getElementById('export-modal-overlay').classList.add('open');
-    updateExportOptions();
+  function toggleExportPanel() {
+    const panel = document.getElementById('export-panel');
+    const overlay = document.getElementById('export-overlay');
+    const isOpen = panel ? panel.classList.contains('open') : false;
+    if (isOpen) {
+      closeExportPanel();
+    } else {
+      if (typeof closeDrivePanel === 'function') closeDrivePanel();
+      if (typeof closeTTSPanel === 'function') closeTTSPanel();
+      if (panel) panel.classList.add('open');
+      if (overlay) overlay.classList.add('open');
+      updateExportOptions();
+    }
   }
 
-  function closeExportModal() {
-    document.getElementById('export-modal-overlay').classList.remove('open');
-    document.getElementById('export-progress').style.display = 'none';
+  function openExportModal() { toggleExportPanel(); }
+  function closeExportModal() { closeExportPanel(); }
+  function closeExportPanel() {
+    const panel = document.getElementById('export-panel');
+    const overlay = document.getElementById('export-overlay');
+    if (panel) panel.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+    const progress = document.getElementById('export-progress');
+    if (progress) progress.style.display = 'none';
   }
 
   function updateExportOptions() {
