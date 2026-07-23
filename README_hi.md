@@ -11,10 +11,21 @@
 ---
 
 ## 📸 गैलरी / स्क्रीनशॉट
-
-| एडिटर (डार्क मोड) | एडिटर (लाइट मोड) |
 | Editor (Dark Mode) | Editor (Light Mode) | Editor (E-ink Mode) |
 | :---: | :---: | :---: |
+| ![Editor Dark](assets/editor-dark.png) | ![Editor Light](assets/editor-light.png) | ![Editor E-ink](assets/editor-e-ink.png) |
+
+| Vitrine / Gallery | Meu Drive / My Drive | Modo Foco / Focus Mode |
+| :---: | :---: | :---: |
+| ![Vitrine](assets/vitrine.png) | ![Drive](assets/meu-drive.png) | ![Foco](assets/focus-mode.png) |
+
+| Exportação / Export | Text-to-Speech (TTS) |
+| :---: | :---: |
+| ![Export](assets/export.png) | ![TTS](assets/tts.png) |
+
+---
+
+: | :---: | :---: |
 | ![Editor Dark](assets/editor-dark.png) | ![Editor Light](assets/editor-light.png) | ![Editor E-ink](assets/editor-e-ink.png) |
 
 | Vitrine / Gallery | Meu Drive / My Drive | Modo Foco / Focus Mode |
