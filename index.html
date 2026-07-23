@@ -3992,7 +3992,12 @@ loadSharedMap();
     try {
       if (scope === 'current') {
         progress.textContent = 'Gerando exportação...';
-        const title = currentMapTitle || 'Mapa_Mental';
+        let title = 'Mapa_Mental';
+        if (typeof currentMapIndex !== 'undefined' && currentMapIndex >= 0 && currentMapFiles && currentMapFiles[currentMapIndex]) {
+          title = currentMapFiles[currentMapIndex].name.replace(/\.md$/i, '');
+        } else if (document.title) {
+          title = document.title.replace(/^Markmap\s*—?\s*/i, '').trim() || 'Mapa_Mental';
+        }
         const mdText = editor.getValue();
         await exportSingleMap(mdText, title, format, theme, transparent);
       } else {
