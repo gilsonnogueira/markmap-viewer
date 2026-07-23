@@ -3954,20 +3954,32 @@ loadSharedMap();
   }
 
   async function svgToCanvas(svgData, width, height) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const img = new Image();
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
+      // Remove @import e url() externas do SVG para evitar Canvas Tainting (problema de segurança do navegador)
+      let safeSvgData = svgData.replace(/@import\s+url\([^)]+\);?/gi, '');
+      safeSvgData = safeSvgData.replace(/url\(["']?(http[^)"']+)["']?\)/gi, 'none');
+
+      // Usa Data URL com encodeURIComponent para evitar 'Tainted Canvas' em foreignObjects
+      const encodedSvg = encodeURIComponent(safeSvgData)
+          .replace(/'/g, '%27')
+          .replace(/"/g, '%22');
+      const url = 'data:image/svg+xml;charset=utf-8,' + encodedSvg;
+      
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = width * 2; // High DPI
-        canvas.height = height * 2;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
-        ctx.drawImage(img, 0, 0);
-        URL.revokeObjectURL(url);
-        resolve(canvas);
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = width * 2; // High DPI
+          canvas.height = height * 2;
+          const ctx = canvas.getContext('2d');
+          ctx.scale(2, 2);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas);
+        } catch (e) {
+          reject(e);
+        }
       };
+      img.onerror = (err) => reject(new Error('Falha ao carregar imagem SVG no Canvas.'));
       img.src = url;
     });
   }
