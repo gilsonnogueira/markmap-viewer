@@ -3892,6 +3892,7 @@ loadSharedMap();
     if (!transformer && window.markmap && window.markmap.Transformer) {
       transformer = new window.markmap.Transformer();
     }
+    const processedMD = preprocessMD(mdText);
     const { root } = transformer.transform(processedMD);
     const mm = window.markmap.Markmap.create(svg, {
       duration: 0,
