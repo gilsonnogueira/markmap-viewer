@@ -3894,6 +3894,18 @@ loadSharedMap();
     }
     const processedMD = preprocessMD(mdText);
     const { root } = transformer.transform(processedMD);
+    
+    // Força expansão completa de todos os nós para exportação
+    function expandAllNodes(node) {
+      if (node.payload) {
+        node.payload.fold = 0; // 0 significa fully expanded
+      }
+      if (node.children) {
+        node.children.forEach(expandAllNodes);
+      }
+    }
+    if (root) expandAllNodes(root);
+
     const mm = window.markmap.Markmap.create(svg, {
       duration: 0,
       initialExpandLevel: 999,

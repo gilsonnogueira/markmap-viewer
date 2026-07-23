@@ -171,3 +171,7 @@ Este projeto é de uso livre para estudos, revisão ativa de conteúdos e fins e
 ## 🙏 Créditos e Agradecimentos
 
 Este projeto foi construído utilizando a incrível biblioteca **[Markmap](https://github.com/markmap/markmap)** como motor principal de renderização dos mapas mentais. Todos os créditos aos desenvolvedores originais e mantenedores do Markmap por tornarem possível a visualização dinâmica de markdown.
+
+## 🚀 Novas Atualizações (Julho de 2026)
+- **Sistema de Exportação Nativo**: Agora você pode exportar mapas mentais individuais ou em lote (pastas inteiras) diretamente pelo navegador nos formatos **PDF, PNG, HTML e SVG**. Suporta temas (Dark, Light, E-ink) e fundo transparente.
+- **Melhorias no Leitor de Áudio (TTS)**: O sistema de voz agora lê corretamente callouts, negritos e listas. O reconhecimento de arquivos de script foi aprimorado para ler estritamente arquivos .txt, ignorando PDFs acidentais.

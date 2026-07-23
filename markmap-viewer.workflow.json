@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "title": "Markmap Viewer Architecture"
+  },
+  "nodes": [
+    { "id": "browser", "label": "Browser (Client)", "category": "frontend" },
+    { "id": "viewer", "label": "Markmap Viewer (SPA)", "category": "frontend" },
+    { "id": "gapi", "label": "Google Identity Services / API v3", "category": "external-systems" },
+    { "id": "drive", "label": "Google Drive", "category": "data-and-storage" }
+  ],
+  "edges": [
+    { "from": "browser", "to": "viewer", "label": "loads HTML/JS" },
+    { "from": "viewer", "to": "gapi", "label": "Auth & Fetch/Save" },
+    { "from": "gapi", "to": "drive", "label": "Read/Write Files" }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Fluxo NotebookLM -> Markmap Viewer"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "components": [
+    {
+      "id": "notebooklm",
+      "label": "NotebookLM (AI)",
+      "type": "external"
+    },
+    {
+      "id": "python_script",
+      "label": "Script Python (Orquestrador)",
+      "type": "backend"
+    },
+    {
+      "id": "google_drive",
+      "label": "Google Drive API",
+      "type": "database"
+    },
+    {
+      "id": "markmap_viewer",
+      "label": "Markmap Viewer SPA",
+      "type": "frontend"
+    }
+  ],
+  "connections": [
+    {
+      "from": "python_script",
+      "to": "notebooklm",
+      "label": "Prompt (Plan + Markdown)"
+    },
+    {
+      "from": "python_script",
+      "to": "google_drive",
+      "label": "Upload Direto (OAuth2)"
+    },
+    {
+      "from": "google_drive",
+      "to": "markmap_viewer",
+      "label": "Renderização e Galeria Pública"
+    }
+  ]
+}

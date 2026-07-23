@@ -161,3 +161,7 @@ This project is free for study, active content review, and educational purposes.
 ## 🙏 Credits and Acknowledgments
 
 Built using the amazing **[Markmap](https://github.com/markmap/markmap)** library as the core rendering engine. All credits to the original Markmap developers and maintainers.
+
+## 🚀 New Updates (July 2026)
+- **Native Export System**: You can now export single mind maps or batch export entire folders directly from the browser in **PDF, PNG, HTML, and SVG** formats. Supports themes (Dark, Light, E-ink) and transparent backgrounds.
+- **Text-to-Speech (TTS) Improvements**: The voice engine now correctly reads callouts, bold text, and lists. Script file recognition has been improved to strictly read .txt files, ignoring accidental PDFs.

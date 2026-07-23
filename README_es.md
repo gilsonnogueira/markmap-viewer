@@ -149,3 +149,7 @@ Este proyecto es de uso libre para estudio, revisión activa de contenidos y fin
 ## 🙏 Créditos
 
 Construido utilizando la increíble biblioteca **[Markmap](https://github.com/markmap/markmap)** como motor de renderizado. Todos los créditos a sus desarrolladores originales.
+
+## 🚀 Nuevas Actualizaciones (Julio de 2026)
+- **Sistema de Exportación Nativo**: Ahora puede exportar mapas mentales individuales o por lotes (carpetas enteras) directamente en el navegador en formatos **PDF, PNG, HTML y SVG**. Soporta temas (Oscuro, Claro, E-ink) y fondos transparentes.
+- **Mejoras en el Lector de Audio (TTS)**: El motor de voz ahora lee correctamente llamadas (callouts), negritas y listas. El reconocimiento de archivos de guion se ha mejorado para leer estrictamente archivos .txt, ignorando PDFs accidentales.
