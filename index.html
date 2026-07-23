@@ -3893,7 +3893,7 @@ loadSharedMap();
       transformer = new window.markmap.Transformer();
     }
     const processedMD = preprocessMD(mdText);
-    const { root } = transformer.transform(processedMD);
+    const { root, frontmatter } = transformer.transform(processedMD);
     
     // Força expansão completa de todos os nós para exportação
     function expandAllNodes(node) {
@@ -3906,7 +3906,13 @@ loadSharedMap();
     }
     if (root) expandAllNodes(root);
 
+    const fmOpts = frontmatter?.markmap ?? {};
+    const baseOpts = typeof window.markmap.deriveOptions === 'function'
+      ? window.markmap.deriveOptions(fmOpts)
+      : fmOpts;
+
     const mm = window.markmap.Markmap.create(svg, {
+      ...baseOpts,
       duration: 0,
       initialExpandLevel: 999,
       colorFreezeLevel: theme === 'eink' ? 0 : 2
