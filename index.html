@@ -3998,7 +3998,7 @@ loadSharedMap();
         } else if (document.title) {
           title = document.title.replace(/^Markmap\s*—?\s*/i, '').trim() || 'Mapa_Mental';
         }
-        const mdText = editor.getValue();
+        const mdText = document.getElementById('editor').value;
         await exportSingleMap(mdText, title, format, theme, transparent);
       } else {
         if (!currentMapFiles || currentMapFiles.length === 0) {
