@@ -3889,8 +3889,10 @@ loadSharedMap();
     svg.style.height = '100%';
     hiddenContainer.appendChild(svg);
 
-    const processedMD = preprocessMD(mdText);
-    const { root } = markmapTransformer.transform(processedMD);
+    if (!transformer && window.markmap && window.markmap.Transformer) {
+      transformer = new window.markmap.Transformer();
+    }
+    const { root } = transformer.transform(processedMD);
     const mm = window.markmap.Markmap.create(svg, {
       duration: 0,
       initialExpandLevel: 999,
